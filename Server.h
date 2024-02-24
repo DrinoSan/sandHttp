@@ -20,5 +20,6 @@ class Server_t
    
    private:
    struct addrinfo hints, *servinfo, *p;
+   int             socketFd;
 };
 };

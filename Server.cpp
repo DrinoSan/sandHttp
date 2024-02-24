@@ -1,5 +1,6 @@
 // System HEADERS
 #include <arpa/inet.h>
+#include <unistd.h>
 
 // Project HEADERS
 #include "Server.h"
@@ -61,9 +62,37 @@ bool Server_t::start( const std::string& ipAdr, int32_t port )
       return 1;
    }
 
-   // Could call this to show information
-   printFilledGetAddrInfo( servinfo );
+   // loop through all the results and bind to the first we can
+   int yes = 1;
+   for ( auto* p = servinfo; p != nullptr; p = p->ai_next )
+   {
+      if ( ( socketFd = socket( p->ai_family, p->ai_socktype,
+                                p->ai_protocol ) ) == -1 )
+      {
+         printf( "server: socket\n" );
+         continue;
+      }
 
+      // So I don't get the annoying failed to bind errors
+      if ( setsockopt( socketFd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                       sizeof( int ) ) == -1 )
+      {
+         printf( "setsockopt\n" );
+         exit( 1 );
+      }
+
+      // bind it to the port we passed in to getaddrinfo():
+      if ( bind( socketFd, p->ai_addr, p->ai_addrlen ) == -1 )
+      {
+         close( socketFd );
+         printf( "server: bind\n" );
+         continue;
+      }
+
+      break;
+   }
+
+   freeaddrinfo( servinfo );   // all done with this structure
 
    return true;
 }
