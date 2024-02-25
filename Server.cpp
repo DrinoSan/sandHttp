@@ -103,7 +103,7 @@ Server_t::Server_t()
    }
 
    // Seting array to sane values
-   for ( int i = 0; i < NUM_K_EVENTS; ++i )
+   for ( int i = 0; i < NUM_WORKERS; ++i )
    {
       memset( &wrkEvents[ i ], 0, sizeof wrkEvents[ i ] );
       memset( &wrkChangedEvents[ i ], 0, sizeof wrkChangedEvents[ i ] );
@@ -179,7 +179,18 @@ bool Server_t::start( int32_t port )
    // start listnener thread here for incoming connections
    listenerThread = std::thread( &Server_t::listenAndAccept, this );
 
+   for ( int32_t i = 0; i < NUM_WORKERS; ++i )
+   {
+      workerThread[ i ] =
+          std::thread( &Server_t::processWorkerEvents, this, i );
+   }
+
    listenerThread.join();
+
+   for ( int32_t i = 0; i < NUM_WORKERS; ++i )
+   {
+      workerThread[ i ].join();
+   }
 
    return true;
 }
@@ -252,4 +263,35 @@ void Server_t::listenAndAccept()
       }
    }
 }
+
+//-----------------------------------------------------------------------------
+void Server_t::processWorkerEvents( int32_t workerIdx )
+{
+   // Kqueu FD
+   int32_t workerKFd = workerKqueueFD[ workerIdx ];
+
+   int32_t numEvents;
+
+   while ( true )
+   {
+      numEvents = kevent( workerKFd, nullptr, 0, wrkEvents[ workerIdx ],
+                          NUM_K_EVENTS, nullptr );
+
+      if ( numEvents == -1 )
+      {
+         // Huston we got a problem
+         exit( EXIT_FAILURE );
+      }
+
+      for ( int32_t i = 0; i < numEvents; ++i )
+      {
+         // TODO Check if kevent calls are all correct for worker and listener
+         //      What should we do withe the numEvents
+         //      We can obtain the SocketFD of each event
+         //      ---
+         //      ident == socket of the connection
+      }
+   }
 }
+
+}   // namespace SandServer

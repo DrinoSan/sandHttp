@@ -11,7 +11,7 @@ namespace SandServer
 {
 
 // Setting backlog for listen call
-constexpr int32_t NUM_K_EVENTS = 15;
+constexpr int32_t NUM_K_EVENTS = 100;
 constexpr int32_t BACK_LOG     = 10;
 constexpr int32_t NUM_WORKERS  = 5;
 
@@ -24,6 +24,7 @@ class Server_t
 
       bool start( int32_t port );
       void listenAndAccept();
+      void processWorkerEvents( int32_t workerIdx );
 
     private:
       struct addrinfo hints, *servinfo, *p;
@@ -37,9 +38,11 @@ class Server_t
       int kq;
       int workerKqueueFD[ NUM_WORKERS ];
 
-      // Threading baby
-      std::thread listenerThread;
       struct kevent wrkEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
       struct kevent wrkChangedEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
+
+      // Threading baby
+      std::thread listenerThread;
+      std::thread workerThread[ NUM_WORKERS ];
 };
 };
