@@ -2,9 +2,10 @@
 #pragma once
 
 // System Headers
+#include <netdb.h>
 #include <string>
 #include <sys/socket.h>
-#include <netdb.h>
+#include <thread>
 
 namespace SandServer
 {
@@ -20,16 +21,21 @@ class Server_t
       Server_t();
       ~Server_t() = default;
 
-      bool start( const std::string& ipAdr, int32_t port );
-   
-   private:
-   struct addrinfo hints, *servinfo, *p;
-   // Strucutre holder information on how to act and handle signals from childs
-   struct sigaction sa;
+      bool start( int32_t port );
+      void listenAndAccept();
 
-   int             socketFd;
+    private:
+      struct addrinfo hints, *servinfo, *p;
+      // Strucutre holder information on how to act and handle signals from
+      // childs
+      struct sigaction sa;
 
-   // Kqueue stuff
-   int workerKqueueFD[ NUM_WORKERS ];
+      int socketFd;
+
+      // Kqueue stuff
+      int workerKqueueFD[ NUM_WORKERS ];
+
+      // Threading baby
+      std::thread listenerThread;
 };
 };

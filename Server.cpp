@@ -1,17 +1,32 @@
 // System HEADERS
 #include <arpa/inet.h>
 #include <errno.h>
+#include <memory>
 #include <signal.h>
 #include <sys/event.h>
 #include <unistd.h>
 
+// Project HEADERS
 #include "Server.h"
 
 // General Helper functions
 namespace SandServer
 {
+
 //-----------------------------------------------------------------------------
-void printFilledGetAddrInfo( struct addrinfo*  servinfo )
+// get sockaddr, IPv4 or IPv6:
+void* get_in_addr( struct sockaddr* sa )
+{
+    if ( sa->sa_family == AF_INET )
+    {
+        return &( ( ( struct sockaddr_in* ) sa )->sin_addr );
+    }
+
+    return &( ( ( struct sockaddr_in6* ) sa )->sin6_addr );
+}
+
+//-----------------------------------------------------------------------------
+void printFilledGetAddrInfo( struct addrinfo* servinfo )
 {
    struct addrinfo *p;
    char ipstr[INET6_ADDRSTRLEN];
@@ -89,7 +104,7 @@ Server_t::Server_t()
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::start( const std::string& ipAdr, int32_t port )
+bool Server_t::start( int32_t port )
 {
    int rv;
    if( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints, &servinfo ) ) != 0 )
@@ -97,6 +112,8 @@ bool Server_t::start( const std::string& ipAdr, int32_t port )
       fprintf( stderr, "getaddrinfo: %s\n", gai_strerror( rv ) );
       return 1;
    }
+
+   printFilledGetAddrInfo( servinfo );
 
    // loop through all the results and bind to the first we can
    int yes = 1;
@@ -144,7 +161,45 @@ bool Server_t::start( const std::string& ipAdr, int32_t port )
       exit( 1 );
    }
 
+   // start listnener thread here for incoming connections
+   listenerThread = std::thread( &Server_t::listenAndAccept, this );
+
+   listenerThread.join();
+
    return true;
 }
 
+//-----------------------------------------------------------------------------
+void Server_t::listenAndAccept()
+{
+   int32_t workderIdx{ 0 };
+   int32_t counter{ 0 };
+   char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
+
+   while ( true )
+   {
+
+      struct sockaddr_storage their_addr;   // connector's address information
+      socklen_t               sin_size;
+
+      int newSocketFD;
+
+      socklen_t addr_size = sizeof their_addr;
+      newSocketFD =
+          accept( socketFd, ( struct sockaddr* ) &their_addr, &addr_size );
+
+      ++counter;
+      if ( newSocketFD == -1 )
+      {
+         printf( "Accept socket failed\n" );
+         --counter;
+         continue;
+      }
+
+      inet_ntop( their_addr.ss_family,
+                 get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
+                 sizeof ipStr );
+      printf( "Server: got connection from %s\n", ipStr );
+   }
+}
 }

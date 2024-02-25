@@ -11,7 +11,7 @@ int main(void)
    asio::io_service ios;
    SandServer::Server_t server;
 
-   server.start( "127.0.0.1", 8000 );
+   server.start( 8000 );
 
    return 0;
 }
