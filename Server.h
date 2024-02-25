@@ -6,9 +6,13 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
 namespace SandServer
 {
+
+// Setting backlog for listen call
+constexpr int32_t BACK_LOG    = 10;
+constexpr int32_t NUM_WORKERS = 5;
+
 class Server_t
 {
    
@@ -20,6 +24,12 @@ class Server_t
    
    private:
    struct addrinfo hints, *servinfo, *p;
+   // Strucutre holder information on how to act and handle signals from childs
+   struct sigaction sa;
+
    int             socketFd;
+
+   // Kqueue stuff
+   int workerKqueueFD[ NUM_WORKERS ];
 };
 };
