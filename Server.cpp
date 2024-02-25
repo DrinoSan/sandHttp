@@ -106,6 +106,8 @@ Server_t::Server_t()
 //-----------------------------------------------------------------------------
 bool Server_t::start( int32_t port )
 {
+   printf( "Listening on port: %d\n", port );
+
    int rv;
    if( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints, &servinfo ) ) != 0 )
    {
@@ -172,13 +174,12 @@ bool Server_t::start( int32_t port )
 //-----------------------------------------------------------------------------
 void Server_t::listenAndAccept()
 {
-   int32_t workderIdx{ 0 };
+   int32_t workerIdx{ 0 };
    int32_t counter{ 0 };
    char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
 
    while ( true )
    {
-
       struct sockaddr_storage their_addr;   // connector's address information
       socklen_t               sin_size;
 
@@ -200,6 +201,16 @@ void Server_t::listenAndAccept()
                  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
                  sizeof ipStr );
       printf( "Server: got connection from %s\n", ipStr );
+
+      // EV_SET(Something something);
+      // We have also worker threads and each worker thread should have its own
+      // event list kevent(Something something);
+
+      ++workerIdx;
+      if ( workerIdx == NUM_WORKERS )
+      {
+         workerIdx = 0;
+      }
    }
 }
 }
