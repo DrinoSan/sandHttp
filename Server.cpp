@@ -101,6 +101,19 @@ Server_t::Server_t()
          exit( EXIT_FAILURE );
       }
    }
+
+   // Seting array to sane values
+   for ( int i = 0; i < NUM_K_EVENTS; ++i )
+   {
+      memset( &wrkEvents[ i ], 0, sizeof wrkEvents[ i ] );
+      memset( &wrkChangedEvents[ i ], 0, sizeof wrkChangedEvents[ i ] );
+   }
+
+   if ( ( kq = kqueue() ) == -1 )
+   {
+      perror( "kqueue" );
+      exit( EXIT_FAILURE );
+   }
 }
 
 //-----------------------------------------------------------------------------
@@ -186,6 +199,7 @@ void Server_t::listenAndAccept()
       int newSocketFD;
 
       socklen_t addr_size = sizeof their_addr;
+      // accept is blocking so everything is cool
       newSocketFD =
           accept( socketFd, ( struct sockaddr* ) &their_addr, &addr_size );
 
@@ -200,11 +214,36 @@ void Server_t::listenAndAccept()
       inet_ntop( their_addr.ss_family,
                  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
                  sizeof ipStr );
+
       printf( "Server: got connection from %s\n", ipStr );
 
       // EV_SET(Something something);
-      // We have also worker threads and each worker thread should have its own
-      // event list kevent(Something something);
+      // Please check:
+      // https://wiki.netbsd.org/tutorials/kqueue_tutorial/#:~:text=A%20kevent%20is%20identified%20by,to%20process%20the%20respective%20event.
+      for ( int32_t i = 0; i < NUM_K_EVENTS; ++i )
+      {
+         // Checking for a slot which available (No socket assigned)
+         if ( wrkChangedEvents[ workerIdx ][ i ].ident == 0 )
+         {
+             EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
+                     EVFILT_READ, EV_ADD, 0, 0, 0 );
+
+             // We have also worker threads and each worker thread should have
+             // its own event list kevent(Something something); I set 1 because
+             // we only add one element to observation
+             if ( kevent( workerKqueueFD[ workerIdx ],
+                          &wrkChangedEvents[ workerIdx ][ i ], 1, nullptr, 0,
+                          nullptr ) < 0 )
+             {
+                 if ( errno != 0 )
+                 {
+                     exit( EXIT_FAILURE );
+                 }
+             }
+
+             break;
+         }
+      }
 
       ++workerIdx;
       if ( workerIdx == NUM_WORKERS )
