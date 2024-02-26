@@ -91,7 +91,6 @@ Server_t::Server_t()
       exit( 1 );
    }
 
-   // TODO: FINISDH kqueue event handling
    // Preparing kqueue worker threads
    for ( int i = 0; i < NUM_WORKERS; ++i )
    {
@@ -199,7 +198,6 @@ bool Server_t::start( int32_t port )
 void Server_t::listenAndAccept()
 {
    int32_t workerIdx{ 0 };
-   int32_t counter{ 0 };
    char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
 
    while ( true )
@@ -214,11 +212,9 @@ void Server_t::listenAndAccept()
       newSocketFD =
           accept( socketFd, ( struct sockaddr* ) &their_addr, &addr_size );
 
-      ++counter;
       if ( newSocketFD == -1 )
       {
-         printf( "Accept socket failed\n" );
-         --counter;
+         printf( "Accept socket failed with errno: <%d>\n", errno );
          continue;
       }
 
@@ -285,11 +281,24 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
       for ( int32_t i = 0; i < numEvents; ++i )
       {
+         auto& event = wrkEvents[ workerIdx ][ i ];
          // TODO Check if kevent calls are all correct for worker and listener
          //      What should we do withe the numEvents
          //      We can obtain the SocketFD of each event
          //      ---
          //      ident == socket of the connection
+
+         if ( event.flags & EV_EOF )
+         {
+             printf( "Client closed Connection\n" );
+             close( event.ident );
+             continue;
+         }
+
+         if ( events.flags & EVFILT_READ )
+         {
+             // Socket has something to read
+         }
       }
    }
 }
