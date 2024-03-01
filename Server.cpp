@@ -9,6 +9,7 @@
 
 // Project HEADERS
 #include "Server.h"
+#include "SocketIOHandler.h"
 
 // General Helper functions
 namespace SandServer
@@ -293,21 +294,9 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EVFILT_READ )
          {
-             // Socket has something to read
-             // Here we need to read from socket and handle the request
-             // TODO: Read in while loop until whole request was consumed
-             std::vector<char> buf(1024);
-             int32_t bytes = recv( event.ident, buf.data(), buf.size(), 0 );
-             printf("Read: %d bytes\n", bytes);
-             printf("Received: %s\n", buf.data());
-             for( const auto& c : buf )
-             {
-                // This way i cen see the CRLF
-                printf("%d\n", c);
-             }
-
-
-             // Great now we have stuff in the buffer but now we need to handle it
+            // nodiscard will remind me to use the return value 
+            SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
+            // Great now we have stuff in the buffer but now we need to handle it
          }
       }
    }

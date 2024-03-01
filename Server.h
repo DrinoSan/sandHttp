@@ -44,5 +44,7 @@ class Server_t
       // Threading baby
       std::thread listenerThread;
       std::thread workerThread[ NUM_WORKERS ];
+
+      int32_t readAll( int32_t sockFd );
 };
 };

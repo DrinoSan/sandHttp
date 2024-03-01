@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Boost REQUIRED COMPONENTS system thread)
 
 # Add executable
-add_executable(httpServer main.cpp Server.cpp)
+add_executable(httpServer main.cpp Server.cpp Request.cpp SocketIOHandler.cpp)
 
 # Include Boost headers
 target_include_directories(httpServer PRIVATE ${Boost_INCLUDE_DIRS})
