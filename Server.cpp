@@ -297,9 +297,14 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EVFILT_READ )
          {
-            // nodiscard will remind me to use the return value 
-            SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
-            // Great now we have stuff in the buffer but now we need to handle it
+            // nodiscard will remind me to use the return value
+             auto httpMessage =
+                 SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
+             // Great now we have stuff in the buffer but now we need to handle
+             // it
+
+             // Sending response
+             SocketIOHandler_t::writeHTTPMessage( event.ident, Request_t() );
          }
       }
    }

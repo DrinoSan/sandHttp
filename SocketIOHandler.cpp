@@ -3,8 +3,8 @@
 #include <sys/socket.h>
 
 // Project Headers
+#include "Log.h"
 #include "SocketIOHandler.h"
-
 
 namespace SandServer
 {
@@ -45,8 +45,8 @@ namespace SandServer
          readBytes = 0;
       }
 
-      printf( "Read: %zu bytes\n", httpMessageBuffer.size() );
-      printf( "Received: %s\n", httpMessageBuffer.c_str() );
+      SLOG_INFO( "Read: {0} bytes", httpMessageBuffer.size() );
+      SLOG_INFO( "Received: {0}", httpMessageBuffer.size() );
 
       return Request_t();
    }
@@ -55,5 +55,7 @@ namespace SandServer
    void SocketIOHandler_t::writeHTTPMessage( int socketFD, const Request_t& request )
    {
       // TODO
+      SLOG_INFO( "Sending response to client on socket {0}", socketFD );
+      send( socketFD, "Hello from SandServer", 21, 0 );
    }
 };
