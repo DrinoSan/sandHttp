@@ -10,14 +10,19 @@ namespace SandServer
    class Log_t
    {
       public:
-         static void init();
+        // Not sure if i need to delete the constructors and i guess i need to delete the others too
+        Log_t()             = delete;
+        Log_t( Log_t& log ) = delete;
 
-         inline static std::shared_ptr<spdlog::logger>& GetCoreLogger()
-         {
-             return s_CoreLogger;
+        static void init();
+
+        inline static std::shared_ptr<spdlog::logger>& GetCoreLogger()
+        {
+            return s_CoreLogger;
          }
 
      private:
+       // Because static we only need to call init once in the main
        static std::shared_ptr<spdlog::logger> s_CoreLogger;
    };
 };
