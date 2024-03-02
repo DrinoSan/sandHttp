@@ -122,12 +122,11 @@ Server_t::Server_t()
 bool Server_t::start( int32_t port )
 {
    SLOG_WARN( "Sarting server on port: {0}", port );
-   printf( "Listening on port: %d\n", port );
 
    int rv;
    if( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints, &servinfo ) ) != 0 )
    {
-      fprintf( stderr, "getaddrinfo: %s\n", gai_strerror( rv ) );
+      SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
       return 1;
    }
 
@@ -141,7 +140,7 @@ bool Server_t::start( int32_t port )
       if ( ( socketFd = socket( p->ai_family, p->ai_socktype,
                                 p->ai_protocol ) ) == -1 )
       {
-         printf( "server: socket\n" );
+         SLOG_ERROR( "Creation of socket failed" );
          continue;
       }
 
@@ -149,15 +148,16 @@ bool Server_t::start( int32_t port )
       if ( setsockopt( socketFd, SOL_SOCKET, SO_REUSEADDR, &yes,
                        sizeof( int ) ) == -1 )
       {
-         printf( "setsockopt\n" );
+         SLOG_ERROR( "Setsockopt" );
          exit( 1 );
       }
 
       // bind it to the port we passed in to getaddrinfo():
       if ( bind( socketFd, p->ai_addr, p->ai_addrlen ) == -1 )
       {
+         SLOG_ERROR( "Binding server with socketfd: {0} failed on port {1}",
+                     socketFd, port );
          close( socketFd );
-         printf( "server: bind\n" );
          continue;
       }
 
@@ -168,14 +168,14 @@ bool Server_t::start( int32_t port )
 
    if ( p == nullptr )
    {
-      fprintf( stderr, "server: failed to bind\n" );
+      SLOG_ERROR( "Was not able to fill addrinfo structure" );
       exit( 1 );
    }
 
    // Helloooo is there someone
    if ( listen( socketFd, BACK_LOG ) == -1 )
    {
-      fprintf( stderr, "listen\n" );
+      SLOG_ERROR( "Failed listen" );
       exit( 1 );
    }
 
@@ -218,7 +218,8 @@ void Server_t::listenAndAccept()
 
       if ( newSocketFD == -1 )
       {
-         printf( "Accept socket failed with errno: <%d>\n", errno );
+         SLOG_ERROR( "Accepting incoming connection failed with errno: {0}",
+                     errno );
          continue;
       }
 
@@ -226,7 +227,7 @@ void Server_t::listenAndAccept()
                  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
                  sizeof ipStr );
 
-      printf( "Server: got connection from %s\n", ipStr );
+      SLOG_TRACE( "Server got new incoming connection from {0}", ipStr );
 
       // EV_SET(Something something);
       // Please check:
@@ -289,7 +290,7 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EV_EOF )
          {
-             printf( "Client closed Connection\n" );
+             SLOG_INFO( "Client closed Connection" );
              close( event.ident );
              continue;
          }
