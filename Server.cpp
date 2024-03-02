@@ -10,6 +10,7 @@
 // Project HEADERS
 #include "Server.h"
 #include "SocketIOHandler.h"
+#include "Log.h"
 
 // General Helper functions
 namespace SandServer
@@ -120,6 +121,7 @@ Server_t::Server_t()
 //-----------------------------------------------------------------------------
 bool Server_t::start( int32_t port )
 {
+   SLOG_WARN( "Sarting server on port: {0}", port );
    printf( "Listening on port: %d\n", port );
 
    int rv;
