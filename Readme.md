@@ -9,6 +9,9 @@ https://github.com/codesenberg/bombardier
   - SocketManager should take over all the socket stuff. The server has enough to do with Routing dispatching, Parsing of requests, session management and so on
   - Need to take care of synchronization then ????
 
+# Future TODO:
+- Probably will need a custom object passed to the kqueue for session management
+
 ## Future
 - Need to check errno 24 for accepting of new connections. Apparently we have to many files open with bombardier
 
