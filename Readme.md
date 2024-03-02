@@ -10,7 +10,10 @@ https://github.com/codesenberg/bombardier
   - Need to take care of synchronization then ????
 
 # Future TODO:
-- Probably will need a custom object passed to the kqueue for session management
+- We need a way to identify user sessions.
+  - The idea is to create a Session Class and a SessionManager for handling
+  - The Session class itself would have a session identifier and this identifier would be passed as udata to kqueue :)
+
 
 ## Future
 - Need to check errno 24 for accepting of new connections. Apparently we have to many files open with bombardier
