@@ -3,10 +3,12 @@ https://github.com/codesenberg/bombardier
 
 # Current open Todos:
 - Would be nice to have a logging library like https://github.com/gabime/spdlog
+  - [x] Added
 - Work on Request class
 - Implement function to write to socket in server_t
 - Big Brain: Split Server_t and SockerManager
   - SocketManager should take over all the socket stuff. The server has enough to do with Routing dispatching, Parsing of requests, session management and so on
+    - Started work on that with SocketIOHandler.h
   - Need to take care of synchronization then ????
 
 # Future TODO:

@@ -237,6 +237,12 @@ void Server_t::listenAndAccept()
          // Checking for a slot which available (No socket assigned)
          if ( wrkChangedEvents[ workerIdx ][ i ].ident == 0 )
          {
+             // Here is the point where we have to add the Session object for
+             // this connection then our EV_SET call would look like this:
+             //
+             /// EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
+             ///         EVFILT_READ, EV_ADD, 0, 0, SESSION_OBJECT );
+
              EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
                      EVFILT_READ, EV_ADD, 0, 0, 0 );
 
@@ -302,6 +308,8 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                  SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
              // Great now we have stuff in the buffer but now we need to handle
              // it
+             // So here comes probably routing into play?!
+             // Here we create the session cookie and set header SET-COOKIE
 
              // Sending response
              SocketIOHandler_t::writeHTTPMessage( event.ident, Request_t() );

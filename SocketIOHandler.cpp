@@ -40,7 +40,6 @@ namespace SandServer
             break;
          }
 
-
          memset( recvBuffer, 0, BUFFER_SIZE );
          readBytes = 0;
       }
