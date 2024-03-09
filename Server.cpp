@@ -296,6 +296,8 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EV_EOF )
          {
+             // From what I understood EV_EOF is sent when nothing is to be read
+             // from socket
              // TODO: Here we need to check
              // If Client really closed connection
              /// Header connection close
