@@ -296,14 +296,25 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EV_EOF )
          {
+             // TODO: Here we need to check
+             // If Client really closed connection
+             /// Header connection close
+             /// When the session/connection does not have a keep alive
+             /// Reached threshold of keep alive
+             ///  To check keep alive i can get the session data from udate
              SLOG_INFO( "Client closed Connection" );
-             close( event.ident );
+             struct kevent deleteEvent;
+             EV_SET( &deleteEvent, event.ident, EVFILT_READ, EV_DELETE, 0, 0,
+                     NULL );
+             kevent( workerKFd, &deleteEvent, 1, NULL, 0, NULL );
+             // close( event.ident );
              continue;
          }
 
          if ( event.flags & EVFILT_READ )
          {
-            // nodiscard will remind me to use the return value
+             SLOG_INFO( "Got a message on the socket to read" );
+             // nodiscard will remind me to use the return value
              auto httpMessage =
                  SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
              // Great now we have stuff in the buffer but now we need to handle

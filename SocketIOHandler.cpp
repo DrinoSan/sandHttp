@@ -53,8 +53,25 @@ namespace SandServer
    //-----------------------------------------------------------------------------
    void SocketIOHandler_t::writeHTTPMessage( int socketFD, const Request_t& request )
    {
-      // TODO
-      SLOG_INFO( "Sending response to client on socket {0}", socketFD );
-      send( socketFD, "Hello from SandServer", 21, 0 );
+      // HTTP response with a simple "Hello World" message
+      // This is only for test to get a real response from server
+      std::string response = "HTTP/1.1 200 OK\r\n";
+      response += "Content-Type: text/plain\r\n";
+      response += "Content-Length: 21\r\n";
+      response += "\r\n";
+      response += "Hello from SandServer";
+
+      // Send the response
+      int bytesSent = send( socketFD, response.c_str(), response.size(), 0 );
+      if ( bytesSent == -1 )
+      {
+         // Handle send error
+         perror( "send" );
+      }
+      else
+      {
+         SLOG_INFO( "Sent {0} bytes to client on socket {1}", bytesSent,
+                    socketFD );
+      }
    }
 };
