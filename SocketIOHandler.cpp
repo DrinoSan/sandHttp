@@ -9,23 +9,22 @@
 namespace SandServer
 {
    //-----------------------------------------------------------------------------
-   Request_t SocketIOHandler_t::readHTTPMessage( int socketFD )
-   {
-      constexpr int32_t BUFFER_SIZE{ 1024 };
-      char recvBuffer[BUFFER_SIZE]; 
-      memset( recvBuffer, 0, BUFFER_SIZE );
+HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
+{
+    constexpr int32_t BUFFER_SIZE{ 1024 };
+    char              recvBuffer[ BUFFER_SIZE ];
+    memset( recvBuffer, 0, BUFFER_SIZE );
 
+    std::string httpMessageBuffer;
+    int32_t     readBytes{ 0 };
 
-      std::string httpMessageBuffer;
-      int32_t     readBytes{ 0 };
-
-      // When is a full message read
-      // 1) We get a /r/n/r/n
-      // 2) We read 0 bytes
-      while( ( readBytes = recv( socketFD, recvBuffer, BUFFER_SIZE, 0 ) ) )
-      {
-         if( readBytes < 0 )
-         {
+    // When is a full message read
+    // 1) We get a /r/n/r/n
+    // 2) We read 0 bytes
+    while ( ( readBytes = recv( socketFD, recvBuffer, BUFFER_SIZE, 0 ) ) )
+    {
+        if ( readBytes < 0 )
+        {
             // We got a error
             break;
          }
@@ -47,11 +46,12 @@ namespace SandServer
       SLOG_INFO( "Read: {0} bytes", httpMessageBuffer.size() );
       SLOG_INFO( "Received: {0}", httpMessageBuffer.size() );
 
-      return Request_t();
+      return HTTPRequest_t();
    }
 
    //-----------------------------------------------------------------------------
-   void SocketIOHandler_t::writeHTTPMessage( int socketFD, const Request_t& request )
+   void SocketIOHandler_t::writeHTTPMessage( int                  socketFD,
+                                             const HTTPRequest_t& request )
    {
       // HTTP response with a simple "Hello World" message
       // This is only for test to get a real response from server

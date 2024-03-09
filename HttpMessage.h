@@ -1,11 +1,14 @@
+#pragma once
+
 // System Headers
 #include <map>
 #include <string>
 
-class HTTPMessage
+//-----------------------------------------------------------------------------
+class HTTPMessage_t
 {
   public:
-    HTTPMessage();
+    HTTPMessage_t() = default;
 
     void        setHeader( const std::string& name, const std::string& value );
     std::string getHeader( const std::string& name ) const;
@@ -17,10 +20,11 @@ class HTTPMessage
     std::string                        body;
 };
 
-class HTTPRequest : public HTTPMessage
+//-----------------------------------------------------------------------------
+class HTTPRequest_t : public HTTPMessage_t
 {
   public:
-    HTTPRequest();
+    HTTPRequest_t() = default;
 
     // Specific methods
     void        setMethod( const std::string& method );
@@ -29,10 +33,11 @@ class HTTPRequest : public HTTPMessage
     std::string getURI() const;
 };
 
-class HTTPResponse : public HTTPMessage
+//-----------------------------------------------------------------------------
+class HTTPResponse_t : public HTTPMessage_t
 {
   public:
-    HTTPResponse();
+    HTTPResponse_t() = default;
 
     // Specific methods
     void        setStatusCode( int statusCode );

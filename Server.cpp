@@ -325,7 +325,8 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              // Here we create the session cookie and set header SET-COOKIE
 
              // Sending response
-             SocketIOHandler_t::writeHTTPMessage( event.ident, Request_t() );
+             SocketIOHandler_t::writeHTTPMessage( event.ident,
+                                                  HTTPRequest_t() );
          }
       }
    }

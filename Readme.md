@@ -5,11 +5,15 @@ https://github.com/codesenberg/bombardier
 - Would be nice to have a logging library like https://github.com/gabime/spdlog
   - [x] Added
 - Work on Request class
-- Implement function to write to socket in server_t
-- Big Brain: Split Server_t and SockerManager
+  - Started work. First I deleted the request file and we now have a HttpMessage file with 3 classes
+    - HttpMessage, HttpRequest, HttpResponse
+- Big Brain: Split Server and SockerManager
   - SocketManager should take over all the socket stuff. The server has enough to do with Routing dispatching, Parsing of requests, session management and so on
     - Started work on that with SocketIOHandler.h
-  - Need to take care of synchronization then ????
+  - Implement function to write to socket in server
+    - Is currently in SocketIOHandler
+      - We need to split readRawSocket and readHttpMessage, I want to split the low level stuff from higher level
+    - Need to take care of synchronization then ????
 
 # Future TODO:
 - We need a way to identify user sessions.

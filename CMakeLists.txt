@@ -15,7 +15,7 @@ message(STATUS "VENDOR_INCLUDE_DIR: ${VENDOR_INCLUDE_DIR}")
 find_package(Boost REQUIRED COMPONENTS system thread)
 
 # Add executable
-add_executable(httpServer main.cpp Server.cpp Request.cpp SocketIOHandler.cpp Log.cpp)
+add_executable(httpServer main.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp)
 
 # Include Boost headers
 target_include_directories(httpServer PRIVATE
