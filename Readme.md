@@ -2,6 +2,7 @@
 https://github.com/codesenberg/bombardier
 
 # Current open Todos:
+- Check TCP keep alive
 - Would be nice to have a logging library like https://github.com/gabime/spdlog
   - [x] Added
 - Work on Request class
