@@ -24,5 +24,11 @@ namespace SandServer
         /// TODO: This is still wrong i need to write a http message object and not a request
         static void writeHTTPMessage( int                  socketFD,
                                       const HTTPRequest_t& request );
+
+      private:
+        // Function to read data from socket
+        /// @param socketFD is socketfd to read from
+        /// @return char byte array
+        [[nodiscard]] static std::string readFromSocket( int socketFD );
    };
 };

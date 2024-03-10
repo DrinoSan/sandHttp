@@ -4,6 +4,9 @@
 #include <map>
 #include <string>
 
+namespace SandServer
+{
+
 //-----------------------------------------------------------------------------
 class HTTPMessage_t
 {
@@ -45,3 +48,5 @@ class HTTPResponse_t : public HTTPMessage_t
     void        setReasonPhrase( const std::string& reasonPhrase );
     std::string getReasonPhrase() const;
 };
+
+};   // namespace SandServer
