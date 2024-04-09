@@ -1,6 +1,7 @@
 // System Headers
-#include <vector>
+#include <string.h>
 #include <sys/socket.h>
+#include <vector>
 
 // Project Headers
 #include "Log.h"
@@ -8,6 +9,77 @@
 
 namespace SandServer
 {
+
+//-----------------------------------------------------------------------------
+HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
+{
+
+    HTTPRequest_t request;
+
+    const char* head = msg;
+    const char* tail = msg;
+
+    // -------------------- Find request type --------------------
+    while ( tail != msg_end && *tail != ' ' )
+        ++tail;
+    request.setHeader( "METHOD", std::string( head, tail ) );
+
+    // -------------------- Find path --------------------
+    while ( tail != msg_end && *tail == ' ' )
+        ++tail;   // Skipping possible whitespaces
+
+    head = tail;
+
+    while ( tail != msg_end && *tail != ' ' )
+        ++tail;
+    request.setHeader( "PATH", std::string( head, tail ) );
+
+    // -------------------- Find HTTP version --------------------
+    while ( tail != msg_end && *tail == ' ' )
+        ++tail;   // Skipping possible whitespaces
+
+    head = tail;
+
+    while ( tail != msg_end && *tail != '\r' )
+        ++tail;
+    request.setHeader( "HTTP_VERSION", std::string( head, tail ) );
+
+    // -------------------- Parsing headers --------------------
+    if ( tail != msg_end )
+        ++tail;   // Skipping '\r'
+    head = tail;
+
+    while ( head != msg_end && *head != '\r' )
+    {
+        while ( tail != msg_end && *tail != '\r' )
+            ++tail;
+
+        const char* colon = head;
+        while ( colon != tail && *colon != ':' )
+        {
+            ++colon;
+        }
+        if ( *colon != ':' )
+        {
+            // This header seems insane :)
+            SLOG_INFO( "ERROR" );
+            break;
+        }
+
+        // TODO: SOMEWHER here is a bug....
+        const char* value = colon + 1;
+        while ( value != tail && *value == ' ' )
+            ++value;
+        request.setHeader( std::string( head, colon ),
+                           std::string( value, tail ) );
+        head = tail + 1;
+    }
+
+    request.printHeaders();
+
+    return HTTPRequest_t();
+}
+
 //-----------------------------------------------------------------------------
 HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 {
@@ -18,8 +90,10 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 
     SLOG_INFO( "Read: {0} bytes", rawString.size() );
     SLOG_INFO( "Received: {0}", rawString.size() );
+    SLOG_INFO( "Raw String: {0}", rawString );
 
-    return HTTPRequest_t();
+    return parseRawString( rawString.c_str(),
+                           rawString.c_str() + rawString.size() );
 }
 
 //-----------------------------------------------------------------------------

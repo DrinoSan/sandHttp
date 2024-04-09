@@ -7,6 +7,7 @@
 namespace SandServer
 {
 
+// TODO: Should this be virtual?????
 //-----------------------------------------------------------------------------
 class HTTPMessage_t
 {
@@ -15,6 +16,7 @@ class HTTPMessage_t
 
     void        setHeader( const std::string& name, const std::string& value );
     std::string getHeader( const std::string& name ) const;
+    void        printHeaders();
     void        setBody( const std::string& body );
     std::string getBody() const;
 
@@ -30,10 +32,16 @@ class HTTPRequest_t : public HTTPMessage_t
     HTTPRequest_t() = default;
 
     // Specific methods
-    void        setMethod( const std::string& method );
+    inline void setMethod( const std::string& method_ ) { method = method_; }
+
     std::string getMethod() const;
     void        setURI( const std::string& uri );
     std::string getURI() const;
+
+  private:
+    std::string method;
+    std::string path;
+    std::string version;
 };
 
 //-----------------------------------------------------------------------------

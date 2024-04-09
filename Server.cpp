@@ -235,32 +235,34 @@ void Server_t::listenAndAccept()
       for ( int32_t i = 0; i < NUM_K_EVENTS; ++i )
       {
          // Checking for a slot which available (No socket assigned)
-         if ( wrkChangedEvents[ workerIdx ][ i ].ident == 0 )
+         if ( wrkChangedEvents[ workerIdx ][ i ].ident != 0 )
          {
-             // Here is the point where we have to add the Session object for
-             // this connection then our EV_SET call would look like this:
-             //
-             /// EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
-             ///         EVFILT_READ, EV_ADD, 0, 0, SESSION_OBJECT );
-
-             EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
-                     EVFILT_READ, EV_ADD, 0, 0, 0 );
-
-             // We have also worker threads and each worker thread should have
-             // its own event list kevent(Something something); I set 1 because
-             // we only add one element to observation
-             if ( kevent( workerKqueueFD[ workerIdx ],
-                          &wrkChangedEvents[ workerIdx ][ i ], 1, nullptr, 0,
-                          nullptr ) < 0 )
-             {
-                 if ( errno != 0 )
-                 {
-                     exit( EXIT_FAILURE );
-                 }
-             }
-
-             break;
+             continue;
          }
+
+         // Here is the point where we have to add the Session object for
+         // this connection then our EV_SET call would look like this:
+         //
+         /// EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
+         ///         EVFILT_READ, EV_ADD, 0, 0, SESSION_OBJECT );
+
+         EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD, EVFILT_READ,
+                 EV_ADD, 0, 0, 0 );
+
+         // We have also worker threads and each worker thread should have
+         // its own event list kevent(Something something); I set 1 because
+         // we only add one element to observation
+         if ( kevent( workerKqueueFD[ workerIdx ],
+                      &wrkChangedEvents[ workerIdx ][ i ], 1, nullptr, 0,
+                      nullptr ) < 0 )
+         {
+             if ( errno != 0 )
+             {
+                 exit( EXIT_FAILURE );
+             }
+         }
+
+         break;
       }
 
       ++workerIdx;
