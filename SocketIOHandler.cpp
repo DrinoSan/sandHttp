@@ -70,13 +70,14 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
         const char* value = colon + 1;
         while ( value != tail && *value == ' ' )
             ++value;
-        request.setHeader( std::string( head, colon ),
+        request.setHeader( std::string( head + 1, colon ),
                            std::string( value, tail ) );
-        head = tail + 1;
+        head = ++tail;   // If we dont move taile one position up then we tail
+                         // is < head and we get some errors on setHeaders call.
     }
 
+    SLOG_INFO( "------------------" );
     request.printHeaders();
-
     return HTTPRequest_t();
 }
 
