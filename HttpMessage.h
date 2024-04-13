@@ -8,6 +8,8 @@ namespace SandServer
 {
 
 // TODO: Should this be virtual?????
+// TODO: Add method to log all fields of object. Make it virtual and in child
+// PrintMe method call BASE::PrintMe
 //-----------------------------------------------------------------------------
 class HTTPMessage_t
 {
@@ -33,14 +35,20 @@ class HTTPRequest_t : public HTTPMessage_t
 
     // Specific methods
     inline void setMethod( const std::string& method_ ) { method = method_; }
+    inline std::string getMethod() const { return method; };
 
-    std::string getMethod() const;
-    void        setURI( const std::string& uri );
-    std::string getURI() const;
+    inline void        setURI( const std::string& uri_ ) { uri = uri_; }
+    inline std::string getURI() const { return uri; }
+
+    inline void setVersion( const std::string& version_ )
+    {
+        version = version_;
+    }
+    inline std::string getVersion() const { return version; }
 
   private:
     std::string method;
-    std::string path;
+    std::string uri;
     std::string version;
 };
 

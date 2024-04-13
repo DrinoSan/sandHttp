@@ -22,7 +22,7 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
     // -------------------- Find request type --------------------
     while ( tail != msg_end && *tail != ' ' )
         ++tail;
-    request.setHeader( "METHOD", std::string( head, tail ) );
+    request.setMethod( std::string( head, tail ) );
 
     // -------------------- Find path --------------------
     while ( tail != msg_end && *tail == ' ' )
@@ -32,7 +32,7 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
 
     while ( tail != msg_end && *tail != ' ' )
         ++tail;
-    request.setHeader( "PATH", std::string( head, tail ) );
+    request.setURI( std::string( head, tail ) );
 
     // -------------------- Find HTTP version --------------------
     while ( tail != msg_end && *tail == ' ' )
@@ -42,7 +42,7 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
 
     while ( tail != msg_end && *tail != '\r' )
         ++tail;
-    request.setHeader( "HTTP_VERSION", std::string( head, tail ) );
+    request.setVersion( std::string( head, tail ) );
 
     // -------------------- Parsing headers --------------------
     if ( tail != msg_end )
