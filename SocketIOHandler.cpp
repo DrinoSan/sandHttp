@@ -77,7 +77,7 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
     }
 
     SLOG_INFO( "------------------" );
-    request.printHeaders();
+    request.printObject();
     return HTTPRequest_t();
 }
 

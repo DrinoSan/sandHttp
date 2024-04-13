@@ -33,6 +33,7 @@ namespace SandServer
 #define SLOG_FATAL( ... ) ::SandServer::Log_t::GetCoreLogger()->fatal( __VA_ARGS__ )
 #define SLOG_ERROR( ... ) ::SandServer::Log_t::GetCoreLogger()->error( __VA_ARGS__ )
 #define SLOG_WARN( ... )  ::SandServer::Log_t::GetCoreLogger()->warn( __VA_ARGS__ )
-#define SLOG_INFO( ... )  ::SandServer::Log_t::GetCoreLogger()->info("{} {} {} {}", __VA_ARGS__, __FILE__ , __FUNCTION__, __LINE__ )
+#define SLOG_INFO( ... )                                                       \
+    ::SandServer::Log_t::GetCoreLogger()->info( __VA_ARGS__ )
 #define SLOG_TRACE( ... ) ::SandServer::Log_t::GetCoreLogger()->trace( __VA_ARGS__ )
 

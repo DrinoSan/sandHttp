@@ -15,12 +15,15 @@ class HTTPMessage_t
 {
   public:
     HTTPMessage_t() = default;
+    virtual ~HTTPMessage_t() = default;
 
     void        setHeader( const std::string& name, const std::string& value );
     std::string getHeader( const std::string& name ) const;
-    void        printHeaders();
     void        setBody( const std::string& body );
     std::string getBody() const;
+
+    void         printHeaders();
+    virtual void printObject();
 
   protected:
     std::map<std::string, std::string> headers;
@@ -32,6 +35,7 @@ class HTTPRequest_t : public HTTPMessage_t
 {
   public:
     HTTPRequest_t() = default;
+    virtual ~HTTPRequest_t() = default;
 
     // Specific methods
     inline void setMethod( const std::string& method_ ) { method = method_; }
@@ -44,7 +48,10 @@ class HTTPRequest_t : public HTTPMessage_t
     {
         version = version_;
     }
+
     inline std::string getVersion() const { return version; }
+
+    void printObject() override;
 
   private:
     std::string method;
@@ -57,12 +64,18 @@ class HTTPResponse_t : public HTTPMessage_t
 {
   public:
     HTTPResponse_t() = default;
+    virtual ~HTTPResponse_t() = default;
 
     // Specific methods
-    void        setStatusCode( int statusCode );
-    int         getStatusCode() const;
+    void setStatusCode( int32_t statusCode_ ) { statusCode = statusCode_; }
+    inline int  getStatusCode() const { return statusCode; }
     void        setReasonPhrase( const std::string& reasonPhrase );
     std::string getReasonPhrase() const;
+
+    void printObject() override;
+
+  private:
+    int32_t statusCode;
 };
 
 };   // namespace SandServer
