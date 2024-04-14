@@ -6,6 +6,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
+#include <functional>
+#include <map>
+
+// Project Headers
+#include "SandMethod.h"
+#include "HttpMessage.h"
 
 namespace SandServer
 {
@@ -17,7 +23,7 @@ constexpr int32_t NUM_WORKERS  = 5;
 
 class Server_t
 {
-   
+
    public:
       Server_t();
       ~Server_t() = default;
@@ -25,6 +31,9 @@ class Server_t
       bool start( int32_t port );
       void listenAndAccept();
       void processWorkerEvents( int32_t workerIdx );
+
+      // Routing
+      void handleRouting( const HTTPRequest_t& request );
 
     private:
       struct addrinfo hints, *servinfo, *p;
@@ -46,5 +55,13 @@ class Server_t
       std::thread workerThread[ NUM_WORKERS ];
 
       int32_t readAll( int32_t sockFd );
+
+      struct RouteKey
+      {
+         std::string uri;
+         SAND_METHOD method;
+      };
+      // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
+      std::map<RouteKey, std::function<void()>> routes;
 };
 };

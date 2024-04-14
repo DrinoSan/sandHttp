@@ -7,9 +7,6 @@
 namespace SandServer
 {
 
-// TODO: Should this be virtual?????
-// TODO: Add method to log all fields of object. Make it virtual and in child
-// PrintMe method call BASE::PrintMe
 //-----------------------------------------------------------------------------
 class HTTPMessage_t
 {

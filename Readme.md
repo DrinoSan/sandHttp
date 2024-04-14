@@ -1,6 +1,9 @@
 # Testing
 https://github.com/codesenberg/bombardier
 
+To test with curl and use a existing connection try:
+- curl 127.0.0.1:8000 127.0.0.1:8000 --http0.9 -v
+
 # Current open Todos:
 - Check TCP keep alive
 - Would be nice to have a logging library like https://github.com/gabime/spdlog
@@ -35,3 +38,4 @@ The readHTTPMEssage will read untill we hit end delimiter \r\n\r\n
 
 # Ressource
 https://www.rfc-editor.org/rfc/rfc2616#section-4
+

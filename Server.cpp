@@ -35,24 +35,26 @@ void printFilledGetAddrInfo( struct addrinfo* servinfo )
    char ipstr[INET6_ADDRSTRLEN];
 
    for( p = servinfo; p != NULL; p = p->ai_next )
-   { 
-      void *addr;
-      std::string ipver;
-      if ( p->ai_family == AF_INET )
-      { 
-         // IPv4
-         struct sockaddr_in *ipv4 = ( struct sockaddr_in * )p->ai_addr; addr = &( ipv4->sin_addr );
-         ipver = "IPv4";
-      }
-      else
-      {
-         // IPv6
-         struct sockaddr_in6 *ipv6 = ( struct sockaddr_in6 * )p->ai_addr; addr = &( ipv6->sin6_addr );
-         ipver = "IPv6";
-      }
+   {
+       void*       addr;
+       std::string ipver;
+       if ( p->ai_family == AF_INET )
+       {
+           // IPv4
+           struct sockaddr_in* ipv4 = ( struct sockaddr_in* ) p->ai_addr;
+           addr                     = &( ipv4->sin_addr );
+           ipver                    = "IPv4";
+       }
+       else
+       {
+           // IPv6
+           struct sockaddr_in6* ipv6 = ( struct sockaddr_in6* ) p->ai_addr;
+           addr                      = &( ipv6->sin6_addr );
+           ipver                     = "IPv6";
+       }
 
-      inet_ntop( p->ai_family, addr, ipstr, sizeof ipstr );
-      printf( " %s: %s\n", ipver.c_str(), ipstr ); 
+       inet_ntop( p->ai_family, addr, ipstr, sizeof ipstr );
+       printf( " %s: %s\n", ipver.c_str(), ipstr );
    }
 }
 
@@ -327,11 +329,32 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              // Here we create the session cookie and set header SET-COOKIE
 
              // Sending response
+             // TODO: This will not take a request it must somehow be coupeld to
+             // the routing method
              SocketIOHandler_t::writeHTTPMessage( event.ident,
                                                   HTTPRequest_t() );
          }
       }
    }
+}
+
+//-----------------------------------------------------------------------------
+void Server_t::handleRouting( const HTTPRequest_t& request )
+{
+    // 1 find existing route
+    // 2 Call function bound to that route
+    // 3 if no route extists return 404
+
+    // Need to implement comparison operator
+    RouteKey routeKey{ request.getURI(), request.getMethod() };
+    if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
+         routes.end() )
+    {
+        // Not found route
+        // 404?
+    }
+
+    auto routeFunction = routes[ { request.getURI(), request.getMethod() } ];
 }
 
 }   // namespace SandServer
