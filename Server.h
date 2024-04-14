@@ -60,6 +60,14 @@ class Server_t
       {
          std::string uri;
          SAND_METHOD method;
+
+         // TODO: Implement me to be able to use me as a key in a map
+         // also when you already coding please implement a json parser for the messages
+         // Also check if the http message parser in socketIOhandler can handle requests with a body / content length
+         bool operator<(const RouteKey &other)
+         {
+            return
+         }
       };
       // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
       std::map<RouteKey, std::function<void()>> routes;
