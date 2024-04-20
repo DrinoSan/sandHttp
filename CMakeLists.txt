@@ -14,12 +14,17 @@ message(STATUS "VENDOR_INCLUDE_DIR: ${VENDOR_INCLUDE_DIR}")
 # Find required packages
 find_package(Boost REQUIRED COMPONENTS system thread)
 
+set_source_files_properties( tags PROPERTIES GENERATED true)
+add_custom_command ( OUTPUT tags
+    COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
+
 # Add executable
 add_executable(httpServer main.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp)
 
 # Include Boost headers
 target_include_directories(httpServer PRIVATE
-   ${Boost_INCLUDE_DIRS} 
+   ${Boost_INCLUDE_DIRS}
    ${VENDOR_INCLUDE_DIR}
 )
 
