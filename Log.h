@@ -1,3 +1,5 @@
+#pragma once
+
 // System Headers
 #include <memory>
 

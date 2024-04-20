@@ -11,47 +11,50 @@ namespace SandServer
 {
 
 //-----------------------------------------------------------------------------
-HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
+/// Function to parse a raw string into a HTTPRequest_t
+/// @param msg pointer to the start of the string
+/// @param msgEnd pointer to the end of the string
+/// @return HTTPRequest_t object
+HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
 {
-
     HTTPRequest_t request;
 
     const char* head = msg;
     const char* tail = msg;
 
     // -------------------- Find request type --------------------
-    while ( tail != msg_end && *tail != ' ' )
+    while ( tail != msgEnd && *tail != ' ' )
         ++tail;
     request.setMethod( std::string( head, tail ) );
 
     // -------------------- Find path --------------------
-    while ( tail != msg_end && *tail == ' ' )
+    while ( tail != msgEnd && *tail == ' ' )
         ++tail;   // Skipping possible whitespaces
 
     head = tail;
 
-    while ( tail != msg_end && *tail != ' ' )
+    while ( tail != msgEnd && *tail != ' ' )
         ++tail;
     request.setURI( std::string( head, tail ) );
 
     // -------------------- Find HTTP version --------------------
-    while ( tail != msg_end && *tail == ' ' )
+    while ( tail != msgEnd && *tail == ' ' )
         ++tail;   // Skipping possible whitespaces
 
     head = tail;
 
-    while ( tail != msg_end && *tail != '\r' )
+    while ( tail != msgEnd && *tail != '\r' )
         ++tail;
     request.setVersion( std::string( head, tail ) );
 
     // -------------------- Parsing headers --------------------
-    if ( tail != msg_end )
+    if ( tail != msgEnd )
         ++tail;   // Skipping '\r'
     head = tail;
 
-    while ( head != msg_end && *head != '\r' )
+    while ( head != msgEnd && *head != '\r' )
     {
-        while ( tail != msg_end && *tail != '\r' )
+        while ( tail != msgEnd && *tail != '\r' )
             ++tail;
 
         const char* colon = head;
@@ -76,9 +79,8 @@ HTTPRequest_t parseRawString( const char* msg, const char* msg_end )
                          // is < head and we get some errors on setHeaders call.
     }
 
-    SLOG_INFO( "------------------" );
     request.printObject();
-    return HTTPRequest_t();
+    return request;
 }
 
 //-----------------------------------------------------------------------------
@@ -88,11 +90,6 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 
     // Parse rawString
     // To get headers and everything
-
-    SLOG_INFO( "Read: {0} bytes", rawString.size() );
-    SLOG_INFO( "Received: {0}", rawString.size() );
-    SLOG_INFO( "Raw String: {0}", rawString );
-
     return parseRawString( rawString.c_str(),
                            rawString.c_str() + rawString.size() );
 }

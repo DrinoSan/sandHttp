@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Log.h"
+
 namespace SandServer
 {
    enum class SAND_METHOD
@@ -7,10 +9,10 @@ namespace SandServer
       GET,
       POST,
       PUT,
-      DELETE
+      DELETE,
+      UNKNOWN
    };
+
+   SAND_METHOD stringToMethod( const std::string& method );
 };
-
-
-
 

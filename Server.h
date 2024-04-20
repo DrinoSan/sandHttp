@@ -17,9 +17,35 @@ namespace SandServer
 {
 
 // Setting backlog for listen call
+// TODO: make this change able in config file
 constexpr int32_t NUM_K_EVENTS = 100;
 constexpr int32_t BACK_LOG     = 10;
 constexpr int32_t NUM_WORKERS  = 5;
+
+struct RouteKey
+{
+   std::string uri;
+   SAND_METHOD method;
+
+   RouteKey( const std::string& uri_, const std::string& method_ )
+   {
+      method = stringToMethod( method_ );
+      uri  = uri_;
+   }
+
+   // When you already coding please implement a json parser for the messages
+   // Also check if the http message parser in socketIOhandler can handle requests with a body / content length
+   // Function to provide ability for usage as key in map
+   bool operator<(const RouteKey &other) const
+   {
+      if( this->uri != other.uri )
+      {
+         return this->uri < other.uri;
+      }
+
+      return this->method < other.method;
+   }
+};
 
 class Server_t
 {
@@ -29,11 +55,23 @@ class Server_t
       ~Server_t() = default;
 
       bool start( int32_t port );
+
+      private:
+      // Function to accept incoming connection wheter ipv6 or ipv4
       void listenAndAccept();
+
+      // Work baby work
       void processWorkerEvents( int32_t workerIdx );
 
-      // Routing
+      // Function to handle incoming routes from clients
+      // TODO: Later this function will probably return something
+      // @param incoming request
       void handleRouting( const HTTPRequest_t& request );
+
+      // Function to add routes which will be handeld by the server
+      // @param route is the endpoint which should be handeld
+      // @param method is the method type for which this endpoint should be usable
+      void addRoute( const std::string& route, const SAND_METHOD& method );
 
     private:
       struct addrinfo hints, *servinfo, *p;
@@ -56,19 +94,6 @@ class Server_t
 
       int32_t readAll( int32_t sockFd );
 
-      struct RouteKey
-      {
-         std::string uri;
-         SAND_METHOD method;
-
-         // TODO: Implement me to be able to use me as a key in a map
-         // also when you already coding please implement a json parser for the messages
-         // Also check if the http message parser in socketIOhandler can handle requests with a body / content length
-         bool operator<(const RouteKey &other)
-         {
-            return
-         }
-      };
       // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
       std::map<RouteKey, std::function<void()>> routes;
 };

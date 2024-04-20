@@ -26,23 +26,24 @@ void HTTPMessage_t::printHeaders()
 //-----------------------------------------------------------------------------
 void HTTPMessage_t::printObject()
 {
-    SLOG_INFO( "DUMP OBJECT" );
+    SLOG_TRACE( "-------------------  DUMP OBJECT BEGIN ------------------- " );
     printHeaders();
+    SLOG_TRACE( "------------------- DUMP OBJECT END ------------------- " );
 }
 
 //-----------------------------------------------------------------------------
 void HTTPRequest_t::printObject()
 {
     HTTPMessage_t::printObject();
-    SLOG_INFO( "Method: {0}", method );
-    SLOG_INFO( "URI: {0}", uri );
-    SLOG_INFO( "Version: {0}", version );
+    SLOG_TRACE( "Method: {0}", method );
+    SLOG_TRACE( "URI: {0}", uri );
+    SLOG_TRACE( "Version: {0}", version );
 }
 
 //-----------------------------------------------------------------------------
 void HTTPResponse_t::printObject()
 {
     HTTPMessage_t::printObject();
-    SLOG_INFO( "StatusCode: {0}", statusCode );
+    SLOG_TRACE( "StatusCode: {0}", statusCode );
 }
 };   // namespace SandServer

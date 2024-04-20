@@ -1,6 +1,6 @@
 // System HEADERS
 #include <arpa/inet.h>
-#include <errno.h>
+#include <cerrno>
 #include <memory>
 #include <signal.h>
 #include <sys/event.h>
@@ -319,13 +319,14 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
          if ( event.flags & EVFILT_READ )
          {
-             SLOG_INFO( "Got a message on the socket to read" );
+             SLOG_WARN( "Got a message on the socket to read" );
              // nodiscard will remind me to use the return value
              auto httpMessage =
                  SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
              // Great now we have stuff in the buffer but now we need to handle
              // it
              // So here comes probably routing into play?!
+             handleRouting( httpMessage );
              // Here we create the session cookie and set header SET-COOKIE
 
              // Sending response
@@ -352,9 +353,17 @@ void Server_t::handleRouting( const HTTPRequest_t& request )
     {
         // Not found route
         // 404?
+        // TODO: return proper 404 message
+        SLOG_ERROR( "Client asked for non existing route: {0}", request.getURI() );
+        return;
     }
 
     auto routeFunction = routes[ { request.getURI(), request.getMethod() } ];
 }
+//-----------------------------------------------------------------------------
+void addRoute( const std::string& route, const SAND_METHOD& method )
+{
+}
 
 }   // namespace SandServer
+
