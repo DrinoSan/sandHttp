@@ -14,5 +14,6 @@ namespace SandServer
    };
 
    SAND_METHOD stringToMethod( const std::string& method );
+   std::string methodToString( const SAND_METHOD& method );
 };
 

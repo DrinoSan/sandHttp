@@ -1,16 +1,19 @@
 // System HEADERS
 #include <arpa/inet.h>
 #include <cerrno>
-#include <memory>
-#include <signal.h>
+#include <csignal>
+#include <functional>
+#include <string>
 #include <sys/event.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 // Project HEADERS
+#include "Log.h"
+#include "SandMethod.h"
 #include "Server.h"
 #include "SocketIOHandler.h"
-#include "Log.h"
 
 // General Helper functions
 namespace SandServer
@@ -279,9 +282,9 @@ void Server_t::listenAndAccept()
 void Server_t::processWorkerEvents( int32_t workerIdx )
 {
    // Kqueu FD
-   int32_t workerKFd = workerKqueueFD[ workerIdx ];
+   const int32_t workerKFd = workerKqueueFD[ workerIdx ];
 
-   int32_t numEvents;
+   int32_t numEvents{ 0 };
 
    while ( true )
    {
@@ -347,12 +350,10 @@ void Server_t::handleRouting( const HTTPRequest_t& request )
     // 3 if no route extists return 404
 
     // Need to implement comparison operator
-    RouteKey routeKey{ request.getURI(), request.getMethod() };
     if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
          routes.end() )
     {
-        // Not found route
-        // 404?
+        // Not found route // 404?
         // TODO: return proper 404 message
         SLOG_ERROR( "Client asked for non existing route: {0}", request.getURI() );
         return;
@@ -360,9 +361,33 @@ void Server_t::handleRouting( const HTTPRequest_t& request )
 
     auto routeFunction = routes[ { request.getURI(), request.getMethod() } ];
 }
+
 //-----------------------------------------------------------------------------
-void addRoute( const std::string& route, const SAND_METHOD& method )
+void Server_t::addRoute(
+    const std::string& route, const SAND_METHOD& method,
+    std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
+        handler )
 {
+    auto methodStr = methodToString( method );
+    if ( methodStr == "UNKNOWN METHOD" )
+    {
+        SLOG_ERROR( "ERROR GOT UNKNOWN METHOD WE SHOULD THROW AT THIS POINT OR "
+                    "RETURN A ERROR VALUE.... TODOOOOO" );
+    }
+
+    SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr );
+    // 1 Check if route and method already exist
+    if ( routes.find( { route, methodStr } ) != routes.end() )
+    {
+        // We found a exsting route with method already
+        SLOG_ERROR( "Route {0} with method {1} already exists", route,
+                    methodStr );
+    }
+
+    // 2 Add route
+    // no route found... we can add ours
+    SLOG_TRACE( "Route added" );
+    routes[ { route, methodStr } ] = std::move( handler );
 }
 
 }   // namespace SandServer

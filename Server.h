@@ -1,13 +1,15 @@
 #pragma once
 
 // System Headers
+#include <cstdint>
+#include <functional>
+#include <map>
 #include <netdb.h>
 #include <string>
+#include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
-#include <functional>
-#include <map>
 
 // Project Headers
 #include "SandMethod.h"
@@ -70,8 +72,13 @@ class Server_t
 
       // Function to add routes which will be handeld by the server
       // @param route is the endpoint which should be handeld
-      // @param method is the method type for which this endpoint should be usable
-      void addRoute( const std::string& route, const SAND_METHOD& method );
+      // @param method is the method type for which this endpoint should be
+      // usable
+      // @param function to be executed on endpoint call
+      void addRoute( const std::string& route, const SAND_METHOD& method,
+                     std::function<void( HTTPRequest_t&  request,
+                                         HTTPResponse_t& response )>
+                         handler );
 
     private:
       struct addrinfo hints, *servinfo, *p;
@@ -95,6 +102,7 @@ class Server_t
       int32_t readAll( int32_t sockFd );
 
       // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
-      std::map<RouteKey, std::function<void()>> routes;
+      std::map<RouteKey, std::function<void( HTTPRequest_t&, HTTPResponse_t& )>>
+          routes;
 };
 };

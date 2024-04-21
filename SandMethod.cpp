@@ -26,4 +26,27 @@ SAND_METHOD stringToMethod( const std::string& method )
     SLOG_INFO( "Unknown HTTP method" );
     return SAND_METHOD::UNKNOWN;
 }
+
+//-----------------------------------------------------------------------------
+std::string methodToString( const SAND_METHOD& method )
+{
+    switch ( method )
+    {
+    case SAND_METHOD::GET:
+        return "GET";
+
+    case SAND_METHOD::POST:
+        return "POST";
+
+    case SAND_METHOD::PUT:
+        return "PUT";
+
+    case SAND_METHOD::DELETE:
+        return "DELETE";
+
+    default:
+        SLOG_ERROR( "Got unknown http method" );
+        return "UNKNOWN METHOD";
+    }
+}
 };   // namespace SandServer
