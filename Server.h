@@ -24,6 +24,9 @@ constexpr int32_t NUM_K_EVENTS = 100;
 constexpr int32_t BACK_LOG     = 10;
 constexpr int32_t NUM_WORKERS  = 5;
 
+using handlerFunc =
+    std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>;
+
 struct RouteKey
 {
    std::string uri;
@@ -58,18 +61,6 @@ class Server_t
 
       bool start( int32_t port );
 
-      private:
-      // Function to accept incoming connection wheter ipv6 or ipv4
-      void listenAndAccept();
-
-      // Work baby work
-      void processWorkerEvents( int32_t workerIdx );
-
-      // Function to handle incoming routes from clients
-      // TODO: Later this function will probably return something
-      // @param incoming request
-      void handleRouting( const HTTPRequest_t& request );
-
       // Function to add routes which will be handeld by the server
       // @param route is the endpoint which should be handeld
       // @param method is the method type for which this endpoint should be
@@ -79,6 +70,18 @@ class Server_t
                      std::function<void( HTTPRequest_t&  request,
                                          HTTPResponse_t& response )>
                          handler );
+
+    private:
+      // Function to accept incoming connection wheter ipv6 or ipv4
+      void listenAndAccept();
+
+      // Work baby work
+      void processWorkerEvents( int32_t workerIdx );
+
+      // Function to handle incoming routes from clients
+      // TODO: Later this function will probably return something
+      // @param incoming request
+      handlerFunc handleRouting( const HTTPRequest_t& request );
 
     private:
       struct addrinfo hints, *servinfo, *p;
@@ -102,7 +105,6 @@ class Server_t
       int32_t readAll( int32_t sockFd );
 
       // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
-      std::map<RouteKey, std::function<void( HTTPRequest_t&, HTTPResponse_t& )>>
-          routes;
+      std::map<RouteKey, handlerFunc> routes;
 };
 };

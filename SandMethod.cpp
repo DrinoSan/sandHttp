@@ -10,15 +10,15 @@ SAND_METHOD stringToMethod( const std::string& method )
     {
         return SAND_METHOD::GET;
     }
-    else if ( method == "POST" )
+    if ( method == "POST" )
     {
         return SAND_METHOD::POST;
     }
-    else if ( method == "PUT" )
+    if ( method == "PUT" )
     {
         return SAND_METHOD::PUT;
     }
-    else if ( method == "DELETE" )
+    if ( method == "DELETE" )
     {
         return SAND_METHOD::DELETE;
     }

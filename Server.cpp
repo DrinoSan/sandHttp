@@ -329,7 +329,10 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              // Great now we have stuff in the buffer but now we need to handle
              // it
              // So here comes probably routing into play?!
-             handleRouting( httpMessage );
+             auto handler = handleRouting( httpMessage );
+             // Temporary
+             HTTPResponse_t response;
+             handler( httpMessage, response );
              // Here we create the session cookie and set header SET-COOKIE
 
              // Sending response
@@ -343,7 +346,7 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 }
 
 //-----------------------------------------------------------------------------
-void Server_t::handleRouting( const HTTPRequest_t& request )
+handlerFunc Server_t::handleRouting( const HTTPRequest_t& request )
 {
     // 1 find existing route
     // 2 Call function bound to that route
@@ -356,10 +359,10 @@ void Server_t::handleRouting( const HTTPRequest_t& request )
         // Not found route // 404?
         // TODO: return proper 404 message
         SLOG_ERROR( "Client asked for non existing route: {0}", request.getURI() );
-        return;
+        return []( HTTPRequest_t& request, HTTPResponse_t& response ) {};
     }
 
-    auto routeFunction = routes[ { request.getURI(), request.getMethod() } ];
+    return routes[ { request.getURI(), request.getMethod() } ];
 }
 
 //-----------------------------------------------------------------------------
