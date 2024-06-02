@@ -11,6 +11,15 @@ namespace SandServer
 class HTTPMessage_t
 {
   public:
+
+    HTTPMessage_t() = default;
+
+    HTTPMessage_t( const HTTPMessage_t& other ) = default;
+    HTTPMessage_t& operator=( const HTTPMessage_t& other ) = default;
+
+    HTTPMessage_t( HTTPMessage_t&& other ) noexcept = default;
+    HTTPMessage_t& operator=( HTTPMessage_t&& other ) noexcept = default;
+
     virtual ~HTTPMessage_t() = default;
 
     void        setHeader( const std::string& name, const std::string& value );
@@ -37,6 +46,14 @@ class HTTPMessage_t
 class HTTPRequest_t : public HTTPMessage_t
 {
   public:
+      HTTPRequest_t() = default;
+
+      HTTPRequest_t( const HTTPRequest_t& other ) = default;
+      HTTPRequest_t& operator= ( const HTTPRequest_t& other ) = default;
+
+      HTTPRequest_t( HTTPRequest_t&& other ) noexcept = default;
+      HTTPRequest_t& operator=( HTTPRequest_t&& other ) noexcept = default;
+
      ~HTTPRequest_t() override = default;
 
     // Specific methods
@@ -71,7 +88,14 @@ class HTTPResponse_t : public HTTPMessage_t
 {
   public:
     HTTPResponse_t() = default;
-    virtual ~HTTPResponse_t() = default;
+
+    HTTPResponse_t( const HTTPResponse_t& other ) = default;
+    HTTPResponse_t& operator=( const HTTPResponse_t& other) = default;
+
+    HTTPResponse_t( HTTPResponse_t&& other ) noexcept = default;
+    HTTPResponse_t& operator=( HTTPResponse_t&& other ) noexcept = default;
+
+    ~HTTPResponse_t() override = default;
 
     // Specific methods
     void setStatusCode( int32_t statusCode_ ) { statusCode = statusCode_; }
