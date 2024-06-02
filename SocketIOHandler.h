@@ -23,7 +23,7 @@ namespace SandServer
         /// @param httpMessage the message we want to write to the socket
         /// TODO: This is still wrong i need to write a http message object and not a request
         static void writeHTTPMessage( int                  socketFD,
-                                      const HTTPRequest_t& request );
+                                      const HTTPResponse_t& response );
 
       private:
         // Function to read data from socket

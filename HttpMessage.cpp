@@ -1,3 +1,7 @@
+// System Headers
+#include <fstream>
+#include <string>
+
 // Project Headers
 #include "HttpMessage.h"
 #include "Log.h"
@@ -45,5 +49,33 @@ void HTTPResponse_t::printObject()
 {
     HTTPMessage_t::printObject();
     SLOG_TRACE( "StatusCode: {0}", statusCode );
+}
+
+//-----------------------------------------------------------------------------
+void HTTPResponse_t::notFound()
+{
+    std::ifstream page404( "html/notFound.html" );
+    if ( !page404.is_open() )
+    {
+        SLOG_ERROR( "Cant read 404 page from file" );
+        return;
+    }
+
+    // HTTP response with a simple "Hello World" message
+    // This is only for test to get a real response from server
+    std::string response = "HTTP/1.1 200 OK\r\n";
+    response += "Content-Type: text/html\r\n";
+    std::string line;
+    while ( getline( page404, line ) )
+    {
+        body += line;
+    }
+    
+    response += "Content-Length: " + std::to_string(body.length()) + "\r\n";
+    response += "\r\n";
+
+    body = response + body;
+    // Close the file
+    page404.close();
 }
 };   // namespace SandServer

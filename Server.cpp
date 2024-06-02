@@ -379,11 +379,12 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              handler( httpMessage, response );
              // Here we create the session cookie and set header SET-COOKIE
 
+             // TODO: Make response add its headers and also the content length!!!!!!!
+
              // Sending response
              // TODO: This will not take a request it must somehow be coupeld to
              // the routing method
-             SocketIOHandler_t::writeHTTPMessage( event.ident,
-                                                  HTTPRequest_t() );
+             SocketIOHandler_t::writeHTTPMessage( event.ident, response );
          }
       }
    }

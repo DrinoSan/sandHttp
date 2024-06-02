@@ -4,6 +4,7 @@
 #include <vector>
 
 // Project Headers
+#include "HttpMessage.h"
 #include "Log.h"
 #include "SocketIOHandler.h"
 
@@ -135,18 +136,10 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
 
 //-----------------------------------------------------------------------------
 void SocketIOHandler_t::writeHTTPMessage( int                  socketFD,
-                                          const HTTPRequest_t& request )
+                                          const HTTPResponse_t& response )
 {
-    // HTTP response with a simple "Hello World" message
-    // This is only for test to get a real response from server
-    std::string response = "HTTP/1.1 200 OK\r\n";
-    response += "Content-Type: text/plain\r\n";
-    response += "Content-Length: 21\r\n";
-    response += "\r\n";
-    response += "Hello from SandServer";
-
     // Send the response
-    int bytesSent = send( socketFD, response.c_str(), response.size(), 0 );
+    int bytesSent = send( socketFD, response.getBody().c_str(), response.getBody().size(), 0 );
     if ( bytesSent == -1 )
     {
         // Handle send error
