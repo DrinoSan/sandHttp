@@ -12,8 +12,8 @@
 #include <thread>
 
 // Project Headers
-#include "SandMethod.h"
 #include "HttpMessage.h"
+#include "SandMethod.h"
 
 namespace SandServer
 {
@@ -29,82 +29,85 @@ using handlerFunc =
 
 struct RouteKey
 {
-   std::string uri;
-   SAND_METHOD method;
+    std::string uri;
+    SAND_METHOD method;
 
-   RouteKey( const std::string& uri_, const std::string& method_ )
-   {
-      method = stringToMethod( method_ );
-      uri  = uri_;
-   }
+    RouteKey( const std::string& uri_, const std::string& method_ )
+        : uri( uri_ ), method( stringToMethod( method_ ) )
+    {
+    }
 
-   // When you already coding please implement a json parser for the messages
-   // Also check if the http message parser in socketIOhandler can handle requests with a body / content length
-   // Function to provide ability for usage as key in map
-   bool operator<(const RouteKey &other) const
-   {
-      if( this->uri != other.uri )
-      {
-         return this->uri < other.uri;
-      }
+    // When you already coding please implement a json parser for the messages
+    // Also check if the http message parser in socketIOhandler can handle
+    // requests with a body / content length Function to provide ability for
+    // usage as key in map
+    bool operator<( const RouteKey& other ) const
+    {
+        if ( this->uri != other.uri )
+        {
+            return this->uri < other.uri;
+        }
 
-      return this->method < other.method;
-   }
+        return this->method < other.method;
+    }
 };
 
 class Server_t
 {
 
-   public:
-      Server_t();
-      ~Server_t() = default;
+  public:
+    Server_t();
+    ~Server_t() = default;
 
       bool start( int32_t port );
 
-      // Function to add routes which will be handeld by the server
-      // @param route is the endpoint which should be handeld
-      // @param method is the method type for which this endpoint should be
-      // usable
-      // @param function to be executed on endpoint call
-      void addRoute( const std::string& route, const SAND_METHOD& method,
-                     std::function<void( HTTPRequest_t&  request,
-                                         HTTPResponse_t& response )>
-                         handler );
+    // Function to add routes which will be handeld by the server
+    // @param route is the endpoint which should be handeld
+    // @param method is the method type for which this endpoint should be
+    // usable
+    // @param function to be executed on endpoint call
+    void addRoute(
+        const std::string& route, const SAND_METHOD& method,
+        std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
+            handler );
 
-    private:
-      // Function to accept incoming connection wheter ipv6 or ipv4
-      void listenAndAccept();
+  private:
+    // Function to accept incoming connection wheter ipv6 or ipv4
+    void listenAndAccept();
 
-      // Work baby work
-      void processWorkerEvents( int32_t workerIdx );
+    // Work baby work
+    void processWorkerEvents( int32_t workerIdx );
 
-      // Function to handle incoming routes from clients
-      // TODO: Later this function will probably return something
-      // @param incoming request
-      handlerFunc handleRouting( const HTTPRequest_t& request );
+    // Function to handle incoming routes from clients
+    // TODO: Later this function will probably return something
+    // @param incoming request
+    auto handleRouting( const HTTPRequest_t& request ) -> handlerFunc;
 
-    private:
-      struct addrinfo hints, *servinfo, *p;
-      // Strucutre holder information on how to act and handle signals from
-      // childs
-      struct sigaction sa;
+  private:
+    struct addrinfo hints, *servinfo, *p;
+    // Strucutre holder information on how to act and handle signals from
+    // childs
+    struct sigaction sa;
+    struct sigaction saInter;
 
-      int socketFd;
+    int           socketFd;
+    volatile bool isRunning{ true };
 
-      // Kqueue stuff
-      int kq;
-      int workerKqueueFD[ NUM_WORKERS ];
+    // Kqueue stuff
+    int kq;
+    int workerKqueueFD[ NUM_WORKERS ];
 
-      struct kevent wrkEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
-      struct kevent wrkChangedEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
+    struct kevent wrkEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
+    struct kevent wrkChangedEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
 
-      // Threading baby
-      std::thread listenerThread;
-      std::thread workerThread[ NUM_WORKERS ];
+    // Threading baby
+    std::thread listenerThread;
+    std::thread workerThread[ NUM_WORKERS ];
 
-      int32_t readAll( int32_t sockFd );
+    int32_t readAll( int32_t sockFd );
 
-      // Could also use std::map<std::tuple<std::string, SAND_METHOD>, std::function<void()>> routes;
-      std::map<RouteKey, handlerFunc> routes;
+    // Could also use std::map<std::tuple<std::string, SAND_METHOD>,
+    // std::function<void()>> routes;
+    std::map<RouteKey, handlerFunc> routes;
 };
-};
+};   // namespace SandServer

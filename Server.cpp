@@ -4,16 +4,32 @@
 #include <csignal>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <sys/event.h>
 #include <unistd.h>
 #include <utility>
 #include <vector>
+#include <signal.h>
 
 // Project HEADERS
 #include "Log.h"
 #include "SandMethod.h"
 #include "Server.h"
 #include "SocketIOHandler.h"
+
+volatile sig_atomic_t gotSigInt = 1;
+int32_t SOCKET_g;
+
+
+//-----------------------------------------------------------------------------
+void sigIntHandler(int sig)
+{
+   gotSigInt = 0;
+   SLOG_WARN("Got sigInt bye bye");
+   shutdown(SOCKET_g, SHUT_RDWR);
+   close(SOCKET_g);
+}
+
 
 // General Helper functions
 namespace SandServer
@@ -37,21 +53,21 @@ void printFilledGetAddrInfo( struct addrinfo* servinfo )
    struct addrinfo *p;
    char ipstr[INET6_ADDRSTRLEN];
 
-   for( p = servinfo; p != NULL; p = p->ai_next )
+   for( p = servinfo; p != nullptr; p = p->ai_next )
    {
        void*       addr;
        std::string ipver;
        if ( p->ai_family == AF_INET )
        {
            // IPv4
-           struct sockaddr_in* ipv4 = ( struct sockaddr_in* ) p->ai_addr;
+           auto* ipv4 = ( struct sockaddr_in* ) p->ai_addr;
            addr                     = &( ipv4->sin_addr );
            ipver                    = "IPv4";
        }
        else
        {
            // IPv6
-           struct sockaddr_in6* ipv6 = ( struct sockaddr_in6* ) p->ai_addr;
+           auto* ipv6 = ( struct sockaddr_in6* ) p->ai_addr;
            addr                      = &( ipv6->sin6_addr );
            ipver                     = "IPv6";
        }
@@ -66,7 +82,7 @@ void sigchld_handler( int s )
 {
    // waitpid() might overwrite errno, so we save and restore it:
    int saved_errno = errno;
-   while ( waitpid( -1, NULL, WNOHANG ) > 0 )
+   while ( waitpid( -1, nullptr, WNOHANG ) > 0 )
       ;
    errno = saved_errno;
 }
@@ -100,9 +116,9 @@ Server_t::Server_t()
    }
 
    // Preparing kqueue worker threads
-   for ( int i = 0; i < NUM_WORKERS; ++i )
+   for (int & i : workerKqueueFD)
    {
-      if ( ( workerKqueueFD[ i ] = kqueue() ) < 0 )
+      if ( ( i = kqueue() ) < 0 )
       {
          fprintf( stderr, "Could not create worker fd for kqueue\n" );
          exit( EXIT_FAILURE );
@@ -121,6 +137,15 @@ Server_t::Server_t()
       perror( "kqueue" );
       exit( EXIT_FAILURE );
    }
+
+   saInter.sa_handler = sigIntHandler;
+   saInter.sa_flags   = 0;   // or SA_RESTART
+   saInter.sa_mask    = 0;
+
+   if ( sigaction( SIGINT, &saInter, nullptr ) == -1 )
+   {
+      SLOG_ERROR( "IN WHILE LOOP GOT SIGINT TRUE" );
+   }
 }
 
 //-----------------------------------------------------------------------------
@@ -132,7 +157,7 @@ bool Server_t::start( int32_t port )
    if( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints, &servinfo ) ) != 0 )
    {
       SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
-      return 1;
+      return false;
    }
 
    printFilledGetAddrInfo( servinfo );
@@ -148,6 +173,9 @@ bool Server_t::start( int32_t port )
          SLOG_ERROR( "Creation of socket failed" );
          continue;
       }
+
+      // Setting socket as global variable for sigInt handler
+      SOCKET_g = socketFd;
 
       // So I don't get the annoying failed to bind errors
       if ( setsockopt( socketFd, SOL_SOCKET, SO_REUSEADDR, &yes,
@@ -195,10 +223,12 @@ bool Server_t::start( int32_t port )
 
    listenerThread.join();
 
-   for ( int32_t i = 0; i < NUM_WORKERS; ++i )
+   for (auto & thread : workerThread)
    {
-      workerThread[ i ].join();
+      thread.join();
    }
+
+   SLOG_INFO("Leaving Sand Server");
 
    return true;
 }
@@ -212,14 +242,19 @@ void Server_t::listenAndAccept()
    while ( true )
    {
       struct sockaddr_storage their_addr;   // connector's address information
-      socklen_t               sin_size;
+      socklen_t               sin_size = 0;
 
-      int newSocketFD;
+      int newSocketFD = 0;
 
       socklen_t addr_size = sizeof their_addr;
       // accept is blocking so everything is cool
       newSocketFD =
           accept( socketFd, ( struct sockaddr* ) &their_addr, &addr_size );
+
+      if( gotSigInt == 0)
+      {
+         break;
+      }
 
       if ( newSocketFD == -1 )
       {
@@ -286,10 +321,19 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
    int32_t numEvents{ 0 };
 
+   struct timespec timeout;
+   timeout.tv_sec = 1;  // Check the flag every second
+   timeout.tv_nsec = 0;
+
    while ( true )
    {
       numEvents = kevent( workerKFd, nullptr, 0, wrkEvents[ workerIdx ],
-                          NUM_K_EVENTS, nullptr );
+                          NUM_K_EVENTS, &timeout );
+
+      if( gotSigInt == 0 )
+      {
+         break;
+      }
 
       if ( numEvents == -1 )
       {
@@ -315,7 +359,7 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              struct kevent deleteEvent;
              EV_SET( &deleteEvent, event.ident, EVFILT_READ, EV_DELETE, 0, 0,
                      NULL );
-             kevent( workerKFd, &deleteEvent, 1, NULL, 0, NULL );
+             kevent( workerKFd, &deleteEvent, 1, nullptr, 0, nullptr );
              // close( event.ident );
              continue;
          }
@@ -351,15 +395,16 @@ handlerFunc Server_t::handleRouting( const HTTPRequest_t& request )
     // 1 find existing route
     // 2 Call function bound to that route
     // 3 if no route extists return 404
-
-    // Need to implement comparison operator
     if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
          routes.end() )
     {
         // Not found route // 404?
         // TODO: return proper 404 message
         SLOG_ERROR( "Client asked for non existing route: {0}", request.getURI() );
-        return []( HTTPRequest_t& request, HTTPResponse_t& response ) {};
+        return []( HTTPRequest_t& request, HTTPResponse_t& response )
+        {
+           return response.notFound();
+        };
     }
 
     return routes[ { request.getURI(), request.getMethod() } ];
@@ -392,6 +437,7 @@ void Server_t::addRoute(
     SLOG_TRACE( "Route added" );
     routes[ { route, methodStr } ] = std::move( handler );
 }
+
 
 }   // namespace SandServer
 
