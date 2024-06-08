@@ -374,9 +374,12 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
              // it
              // So here comes probably routing into play?!
              auto handler = handleRouting( httpMessage );
-             // Temporary
+             
+             // This feels ugly
              HTTPResponse_t response;
              handler( httpMessage, response );
+             response.prepareResponse();
+
              // Here we create the session cookie and set header SET-COOKIE
 
              // TODO: Make response add its headers and also the content length!!!!!!!

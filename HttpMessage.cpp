@@ -16,6 +16,23 @@ void HTTPMessage_t::setHeader( const std::string& name,
 }
 
 //-----------------------------------------------------------------------------
+std::string HTTPMessage_t::stringifyHeaders()
+{
+    std::string header;
+    for ( const auto& [ key, value ] : headers )
+    {
+        header.append( key );
+        header.append( ":" );
+        header.append( value );
+        header.append( "\r\n" );
+    }
+
+    header.append( "\r\n" );
+
+    return header;
+}
+
+//-----------------------------------------------------------------------------
 void HTTPMessage_t::printHeaders()
 {
     SLOG_INFO( "DUMP HEADERS" );
@@ -44,11 +61,43 @@ void HTTPRequest_t::printObject()
     SLOG_TRACE( "Version: {0}", version );
 }
 
+
+// HTTPResponse Definitions
+
+//-----------------------------------------------------------------------------
+void HTTPResponse_t::prepareResponse()
+{
+    // We need:
+    // 0.9 Check for body to get content-length
+    if( ! body.empty() )
+    {
+        setHeader("Content-Length", std::to_string(body.length()));
+    }
+
+    // 1 statusLine
+    std::string header = setStatusLine();
+    for ( const auto& [ key, value ] : headers )
+    {
+        header.append( key );
+        header.append( ":" );
+        header.append( value );
+        header.append( "\r\n" );
+    }
+
+    header.append( "\r\n" );
+
+    body = header + body;
+
+    SLOG_ERROR("SAND::::: {0}", body);
+}
+
 //-----------------------------------------------------------------------------
 void HTTPResponse_t::printObject()
 {
     HTTPMessage_t::printObject();
-    SLOG_TRACE( "StatusCode: {0}", statusCode );
+    SLOG_INFO( "StatusCode: {0}", statusCode );
+    SLOG_INFO( "ReasonPhrase: {0}", reasonPhrase );
+    SLOG_INFO( "HttpVersion: {0}", httpVersion );
 }
 
 //-----------------------------------------------------------------------------
@@ -61,21 +110,33 @@ void HTTPResponse_t::notFound()
         return;
     }
 
-    // HTTP response with a simple "Hello World" message
-    // This is only for test to get a real response from server
-    std::string response = "HTTP/1.1 200 OK\r\n";
-    response += "Content-Type: text/html\r\n";
+    setHeader("Content-Type", "text/html");
+    
     std::string line;
     while ( getline( page404, line ) )
     {
         body += line;
     }
-    
-    response += "Content-Length: " + std::to_string(body.length()) + "\r\n";
-    response += "\r\n";
 
-    body = response + body;
     // Close the file
     page404.close();
 }
+
+//-----------------------------------------------------------------------------
+std::string HTTPResponse_t::stringifyHeaders()
+{
+    std::string header = setStatusLine();
+    for ( const auto& [ key, value ] : headers )
+    {
+        header.append( key );
+        header.append( ":" );
+        header.append( value );
+        header.append( "\r\n" );
+    }
+
+    header.append( "\r\n" );
+
+    return header;
+}
+
 };   // namespace SandServer

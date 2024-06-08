@@ -4,6 +4,9 @@
 #include <map>
 #include <string>
 
+// Project Headers
+#include "HttpStatusCodes.h"
+
 namespace SandServer
 {
 
@@ -21,7 +24,8 @@ class HTTPMessage_t
 
     virtual ~HTTPMessage_t() = default;
 
-    void setHeader( const std::string& name, const std::string& value );
+    void        setHeader( const std::string& name, const std::string& value );
+    std::string stringifyHeaders();
 
     [[nodiscard]]
     std::string getHeader( const std::string& name ) const;
@@ -97,7 +101,12 @@ class HTTPRequest_t : public HTTPMessage_t
 class HTTPResponse_t : public HTTPMessage_t
 {
   public:
-    HTTPResponse_t() = default;
+    HTTPResponse_t()
+        : statusCode{ StatusCode::OK },
+          reasonPhrase{ SandServer::reasonPhrase( statusCode ) },
+          httpVersion{ "HTTP/1.1" }
+    {
+    }
 
     HTTPResponse_t( const HTTPResponse_t& other )            = default;
     HTTPResponse_t& operator=( const HTTPResponse_t& other ) = default;
@@ -107,18 +116,32 @@ class HTTPResponse_t : public HTTPMessage_t
 
     ~HTTPResponse_t() override = default;
 
-    // Specific methods
     void setStatusCode( int32_t statusCode_ ) { statusCode = statusCode_; }
     [[nodiscard]] inline int getStatusCode() const { return statusCode; }
     void                     setReasonPhrase( const std::string& reasonPhrase );
     [[nodiscard]] std::string getReasonPhrase() const;
 
+    void prepareResponse();
     void printObject() override;
 
     void notFound();
 
+    [[nodiscard]]
+    std::string stringifyHeaders();
+
   private:
-    int32_t statusCode{};
+    // Specific methods
+    [[nodiscard]]
+    inline std::string setStatusLine()
+    {
+        return httpVersion +  " " + std::to_string( statusCode ) + " " + reasonPhrase +
+               "\r\n";
+    }
+
+  private:
+    int32_t     statusCode{};
+    std::string reasonPhrase{};
+    std::string httpVersion{};
 };
 
 };   // namespace SandServer

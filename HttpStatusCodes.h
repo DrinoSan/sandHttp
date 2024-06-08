@@ -22,7 +22,7 @@ namespace SandServer
 // clang-format off
 /*! Enum for the HTTP status codes.
  */
-enum Code
+enum StatusCode
 {
 	/*####### 1xx - Informational #######*/
 	/* Indicates an interim response for communicating connection status
