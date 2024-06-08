@@ -87,8 +87,6 @@ void HTTPResponse_t::prepareResponse()
     header.append( "\r\n" );
 
     body = header + body;
-
-    SLOG_ERROR("SAND::::: {0}", body);
 }
 
 //-----------------------------------------------------------------------------
@@ -98,6 +96,7 @@ void HTTPResponse_t::printObject()
     SLOG_INFO( "StatusCode: {0}", statusCode );
     SLOG_INFO( "ReasonPhrase: {0}", reasonPhrase );
     SLOG_INFO( "HttpVersion: {0}", httpVersion );
+    SLOG_INFO( "Http Response body: {0}", body );
 }
 
 //-----------------------------------------------------------------------------
@@ -125,7 +124,7 @@ void HTTPResponse_t::notFound()
 //-----------------------------------------------------------------------------
 std::string HTTPResponse_t::stringifyHeaders()
 {
-    std::string header = setStatusLine();
+    std::string header;
     for ( const auto& [ key, value ] : headers )
     {
         header.append( key );

@@ -6,6 +6,7 @@ To test with curl and use a existing connection try:
 
 # Current open Todos:
 - ADD Headers to paths which are registerd!!!! MUST DO NEXT
+  - Important for serving staticFiles content-type based of file extension
 - Create sigaction to exit threads in a normal way and also listendAndAccept function
 - Check TCP keep alive
 - Would be nice to have a logging library like https://github.com/gabime/spdlog
