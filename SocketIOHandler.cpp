@@ -25,38 +25,52 @@ HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
 
     // -------------------- Find request type --------------------
     while ( tail != msgEnd && *tail != ' ' )
+    {
         ++tail;
+    }
     request.setMethod( std::string( head, tail ) );
 
     // -------------------- Find path --------------------
     while ( tail != msgEnd && *tail == ' ' )
+    {
         ++tail;   // Skipping possible whitespaces
+    }
 
     head = tail;
 
     while ( tail != msgEnd && *tail != ' ' )
+    {
         ++tail;
+    }
     request.setURI( std::string( head, tail ) );
 
     // -------------------- Find HTTP version --------------------
     while ( tail != msgEnd && *tail == ' ' )
+    {
         ++tail;   // Skipping possible whitespaces
+    }
 
     head = tail;
 
     while ( tail != msgEnd && *tail != '\r' )
+    {
         ++tail;
+    }
     request.setVersion( std::string( head, tail ) );
 
     // -------------------- Parsing headers --------------------
     if ( tail != msgEnd )
+    {
         ++tail;   // Skipping '\r'
+    }
     head = tail;
 
     while ( head != msgEnd && *head != '\r' )
     {
         while ( tail != msgEnd && *tail != '\r' )
+        {
             ++tail;
+        }
 
         const char* colon = head;
         while ( colon != tail && *colon != ':' )
@@ -73,7 +87,10 @@ HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
         // TODO: SOMEWHER here is a bug....
         const char* value = colon + 1;
         while ( value != tail && *value == ' ' )
+        {
             ++value;
+        }
+
         request.setHeader( std::string( head + 1, colon ),
                            std::string( value, tail ) );
         head = ++tail;   // If we dont move taile one position up then we tail
@@ -134,12 +151,15 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
     return rawData;
 }
 
+// TODO: Only send CHUNK_SIZE bytes over network
 //-----------------------------------------------------------------------------
-void SocketIOHandler_t::writeHTTPMessage( int                  socketFD,
+void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
                                           const HTTPResponse_t& response )
 {
     // Send the response
-    int bytesSent = send( socketFD, response.getBody().c_str(), response.getBody().size(), 0 );
+    SLOG_WARN("RESPONSE BODY: {0}", response.getBody() );
+    int bytesSent = send( socketFD, response.getBody().c_str(),
+                          response.getBody().size(), 0 );
     if ( bytesSent == -1 )
     {
         // Handle send error
@@ -151,4 +171,4 @@ void SocketIOHandler_t::writeHTTPMessage( int                  socketFD,
                    socketFD );
     }
 }
-};
+};   // namespace SandServer

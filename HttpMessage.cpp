@@ -4,6 +4,7 @@
 
 // Project Headers
 #include "HttpMessage.h"
+#include "HttpStatusCodes.h"
 #include "Log.h"
 
 namespace SandServer
@@ -53,6 +54,18 @@ void HTTPMessage_t::printObject()
 }
 
 //-----------------------------------------------------------------------------
+std::optional<std::string> HTTPMessage_t::getHeader( const std::string& name ) const
+{
+    auto foundIt = headers.find( name );
+    if( foundIt != headers.end() )
+    {
+        return foundIt->second;
+    }
+
+    return {};
+}
+
+//-----------------------------------------------------------------------------
 void HTTPRequest_t::printObject()
 {
     HTTPMessage_t::printObject();
@@ -69,9 +82,10 @@ void HTTPResponse_t::prepareResponse()
 {
     // We need:
     // 0.9 Check for body to get content-length
+    // TODO: Check if content-length is already set if not we set it here
     if( ! body.empty() )
     {
-        setHeader("Content-Length", std::to_string(body.length()));
+        setHeader( "Content-Length", std::to_string( body.length() ) );
     }
 
     // 1 statusLine
@@ -110,6 +124,8 @@ void HTTPResponse_t::notFound()
     }
 
     setHeader("Content-Type", "text/html");
+    setStatusCode( StatusCode::NotFound );
+    setReasonPhraseByStatusCode( StatusCode::NotFound );
     
     std::string line;
     while ( getline( page404, line ) )

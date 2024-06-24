@@ -2,6 +2,7 @@
 
 // System Headers
 #include <map>
+#include <optional>
 #include <string>
 
 // Project Headers
@@ -28,7 +29,13 @@ class HTTPMessage_t
     std::string stringifyHeaders();
 
     [[nodiscard]]
-    std::string getHeader( const std::string& name ) const;
+    std::optional<std::string> getHeader( const std::string& name ) const;
+
+    [[nodiscard]]
+    bool isHeaderSet( const std::string& name ) const
+    {
+        return headers.find( name ) != headers.end();
+    }
 
     inline void setBody( const std::string& body_ ) { body = body_; }
 
@@ -37,6 +44,7 @@ class HTTPMessage_t
     {
         return body;
     }
+
     [[nodiscard]] inline std::string getBody() const { return body; }
 
     void         printHeaders();
@@ -101,6 +109,8 @@ class HTTPRequest_t : public HTTPMessage_t
 class HTTPResponse_t : public HTTPMessage_t
 {
   public:
+    // TODO: Create a second constructor if I want to pass a custom status code
+    // and a reasonPhrase based on the statusCode
     HTTPResponse_t()
         : statusCode{ StatusCode::OK },
           reasonPhrase{ SandServer::reasonPhrase( statusCode ) },
@@ -118,7 +128,16 @@ class HTTPResponse_t : public HTTPMessage_t
 
     void setStatusCode( int32_t statusCode_ ) { statusCode = statusCode_; }
     [[nodiscard]] inline int getStatusCode() const { return statusCode; }
-    void                     setReasonPhrase( const std::string& reasonPhrase );
+    void                     setReasonPhrase( const std::string& reasonPhrase_ )
+    {
+        reasonPhrase = reasonPhrase_;
+    }
+
+    void setReasonPhraseByStatusCode( const StatusCode& statusCode_ )
+    {
+        reasonPhrase = SandServer::reasonPhrase( statusCode_ );
+    }
+
     [[nodiscard]] std::string getReasonPhrase() const;
 
     void prepareResponse();
@@ -134,8 +153,8 @@ class HTTPResponse_t : public HTTPMessage_t
     [[nodiscard]]
     inline std::string setStatusLine()
     {
-        return httpVersion +  " " + std::to_string( statusCode ) + " " + reasonPhrase +
-               "\r\n";
+        return httpVersion + " " + std::to_string( statusCode ) + " " +
+               reasonPhrase + "\r\n";
     }
 
   private:
