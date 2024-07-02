@@ -13,6 +13,7 @@
 #include <thread>
 #include <filesystem>
 #include <utility>
+#include <vector>
 
 // Project Headers
 #include "HttpMessage.h"
@@ -92,13 +93,13 @@ class Server_t
     // Function to handle incoming routes from clients
     // TODO: Later this function will probably return something
     // @param incoming request
-    auto handleRouting( const HTTPRequest_t& request ) -> handlerFunc;
+    auto handleRouting( HTTPRequest_t& request ) -> handlerFunc;
 
     // Function to read and return file content into response
     /// @param servingDir directory which is served
     /// @param file/resource which will be served and returned in response body
     /// @return HTTPResponse_t which file content loaded in body and headers set appropriate to file extension
-    HTTPResponse_t serveFile( const fs::path& servingDir, std::string_view file );
+    HTTPResponse_t serveFile( const fs::path& servingDir, const std::vector<std::string>& urlParts );
 
   private:
     struct addrinfo hints, *servinfo, *p;

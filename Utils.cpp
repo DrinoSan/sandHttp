@@ -24,6 +24,7 @@ namespace SandServer
             if( *tail == '\0')
             {
                 SLOG_ERROR("REACHED END OF STRING");
+                res.emplace_back( head, tail);
                 break;
             }
 

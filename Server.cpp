@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <cerrno>
 #include <csignal>
+#include <filesystem>
 #include <functional>
 #include <signal.h>
 #include <string>
@@ -163,7 +164,7 @@ void Server_t::serveStaticFiles( std::string_view filePath,
     addRoute( static_cast<std::string>( urlPrefix ), SAND_METHOD::GET,
               [ & ]( HTTPRequest_t& request, HTTPResponse_t& response )
               {
-                  response = serveFile( filePath, request.getURI() );
+                  response = serveFile( filePath, request.getUrlParts() );
               } );   // TODO: filePath -> dir or servingDir
 
     // Serve files
@@ -172,26 +173,49 @@ void Server_t::serveStaticFiles( std::string_view filePath,
 }
 
 //-----------------------------------------------------------------------------
-HTTPResponse_t Server_t::serveFile( const fs::path&  servingDir,
-                                    std::string_view file )
+HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
+                                    const std::vector<std::string>& urlParts )
 {
     // Get filepath
-    HTTPResponse_t response;
     // Append the requested path to the root directory
 
     // Needed to check if our part for the file starts with a /
     // TODO: test with nested files/folders
-    auto filePathPart = file.substr( staticFilesUrlPrefix.size() );
-    if( ! filePathPart.empty() && filePathPart.front() == '/' )
+    HTTPResponse_t response;
+    if ( urlParts.size() < 2 )
     {
-        filePathPart.remove_prefix(1);
+        // No file provided
+        response.notFound();
+        return response;
     }
 
-    auto filePath = servingDir / fs::path( filePathPart );
+    std::string filePathPart;
+    fs::path    filePath = servingDir;
+    for ( std::string_view part : urlParts )
+    {
+        if ( part.front() == '/' )
+        {
+            part.remove_prefix( 1 );
+        }
+
+        // TODO: This check is shit
+        if ( part == "static" )
+        {
+            continue;
+        }
+
+        filePath = filePath / fs::path( part );
+    }
 
     // Check if the file exists
-    if ( !fs::exists( filePath ) )
+    if ( !fs::exists( filePath ) || fs::is_directory( filePath ) )
     {
+        if ( fs::is_directory( filePath ) )
+        {
+            // TODO: Check if this really is logged if we access a folder only
+            SLOG_WARN( "Requested path is a directory. We are returning 404" );
+        }
+
         response.notFound();
         return response;
     }
@@ -491,16 +515,14 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 }
 
 //-----------------------------------------------------------------------------
-handlerFunc Server_t::handleRouting( const HTTPRequest_t& request )
+handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
 {
     // TODO: Check if static. This IS TEMPORARY, the baby does not let me sleep
-    SLOG_ERROR( "Printing prefix staticFilesUrlPrefix: {0}",
-                staticFilesUrlPrefix );
     auto requestUrlElements = splitString( request.getURI(), '/' );
-    SLOG_ERROR( "Printing prefix vector: {0}", requestUrlElements[ 0 ] );
     if ( !requestUrlElements.empty() &&
          requestUrlElements[ 0 ] == staticFilesUrlPrefix )
     {
+        request.setUrlParts( requestUrlElements );
         return routes[ { static_cast<std::string>( staticFilesUrlPrefix ),
                          methodToString( SAND_METHOD::GET ) } ];
     }
