@@ -6,14 +6,19 @@
 #include <map>
 #include <netdb.h>
 #include <string>
+#include <string_view>
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
+#include <filesystem>
+#include <utility>
 
 // Project Headers
 #include "HttpMessage.h"
 #include "SandMethod.h"
+
+namespace fs = std::filesystem;
 
 namespace SandServer
 {
@@ -32,8 +37,8 @@ struct RouteKey
     std::string uri;
     SAND_METHOD method;
 
-    RouteKey( const std::string& uri_, const std::string& method_ )
-        : uri( uri_ ), method( stringToMethod( method_ ) )
+    RouteKey( std::string  uri_, const std::string& method_ )
+        : uri(std::move( uri_ )), method( stringToMethod( method_ ) )
     {
     }
 
@@ -59,7 +64,13 @@ class Server_t
     Server_t();
     ~Server_t() = default;
 
-      bool start( int32_t port );
+    // Function to handle static files served from filePath
+    /// @param filePath path of files to be served from
+    /// @param urlPrefix on which endpoint url the files will be served
+    void serveStaticFiles( std::string_view filePath, std::string_view urlPrefix );
+
+    // Function to start the server
+    bool start( int32_t port );
 
     // Function to add routes which will be handeld by the server
     // @param route is the endpoint which should be handeld
@@ -82,6 +93,12 @@ class Server_t
     // TODO: Later this function will probably return something
     // @param incoming request
     auto handleRouting( const HTTPRequest_t& request ) -> handlerFunc;
+
+    // Function to read and return file content into response
+    /// @param servingDir directory which is served
+    /// @param file/resource which will be served and returned in response body
+    /// @return HTTPResponse_t which file content loaded in body and headers set appropriate to file extension
+    HTTPResponse_t serveFile( const fs::path& servingDir, std::string_view file );
 
   private:
     struct addrinfo hints, *servinfo, *p;
@@ -109,5 +126,7 @@ class Server_t
     // Could also use std::map<std::tuple<std::string, SAND_METHOD>,
     // std::function<void()>> routes;
     std::map<RouteKey, handlerFunc> routes;
+    
+    std::string_view staticFilesUrlPrefix;
 };
 };   // namespace SandServer

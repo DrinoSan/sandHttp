@@ -85,7 +85,7 @@ void HTTPResponse_t::prepareResponse()
     // TODO: Check if content-length is already set if not we set it here
     if( ! body.empty() )
     {
-        setHeader( "Content-Length", std::to_string( body.length() ) );
+        setHeader( "Content-Length", std::to_string( body.size() ) );
     }
 
     // 1 statusLine
