@@ -11,6 +11,8 @@
 namespace SandServer
 {
 
+constexpr int32_t CHUNK_SIZE = 1000;
+
 //-----------------------------------------------------------------------------
 /// Function to parse a raw string into a HTTPRequest_t
 /// @param msg pointer to the start of the string
@@ -156,19 +158,28 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
 void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
                                           const HTTPResponse_t& response )
 {
-    // Send the response
-    SLOG_WARN("RESPONSE BODY: {0}", response.getBody() );
-    int bytesSent = send( socketFD, response.getBody().c_str(),
-                          response.getBody().size(), 0 );
-    if ( bytesSent == -1 )
+    int32_t bytesSent{ 0 };
+    int32_t chunkSize{ 0 };
+
+    while ( bytesSent < response.getBody().size() )
     {
-        // Handle send error
-        perror( "send" );
+        chunkSize = response.getBody().size() - bytesSent;
+        if ( chunkSize > CHUNK_SIZE )
+        {
+            chunkSize = CHUNK_SIZE;
+        }
+
+        SLOG_INFO( "Chunk size set to {0}", chunkSize );
+
+        bytesSent += send( socketFD, response.getBody().c_str() + bytesSent,
+                           chunkSize, 0 );
+        
+        if( bytesSent == response.getBody().size() )
+        {
+            break;
+        }
     }
-    else
-    {
-        SLOG_INFO( "Sent {0} bytes to client on socket {1}", bytesSent,
-                   socketFD );
-    }
+
+    SLOG_INFO( "sent {0} bytes to client on socket {1}", bytesSent, socketFD );
 }
 };   // namespace SandServer
