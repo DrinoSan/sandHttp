@@ -13,7 +13,6 @@ namespace SandServer
     //-----------------------------------------------------------------------------
     std::vector<std::string> splitString( const std::string& str, const char delimiter )
     {
-        SLOG_ERROR("TEST IN SPLIT STRING FUNCTION with single char");
         std::vector<std::string> res;
 
         const char* head = str.data();
@@ -31,6 +30,8 @@ namespace SandServer
             if( ! str.empty() && tail == str.data() && *tail == delimiter )
             {
                 ++tail;
+                ++head;
+
                 continue;
             }
 
@@ -41,14 +42,6 @@ namespace SandServer
             }
 
             ++tail;
-        }
-
-        // TODO add also last part of url without / to the res vec
-        // if( )
-
-        for( const auto& word : res )
-        {
-            SLOG_ERROR("SAND Word: {0}", word);
         }
 
         return res;

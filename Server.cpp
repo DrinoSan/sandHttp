@@ -159,6 +159,11 @@ void Server_t::serveStaticFiles( std::string_view filePath,
                                  std::string_view urlPrefix )
 {
     // We need to know the endpoint where static files are served
+    if( ! urlPrefix.empty() && urlPrefix.front() == '/' )
+    {
+        urlPrefix.remove_prefix( 1 );
+    }
+
     staticFilesUrlPrefix = urlPrefix;
 
     addRoute( static_cast<std::string>( urlPrefix ), SAND_METHOD::GET,
@@ -475,11 +480,13 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                 /// Reached threshold of keep alive
                 ///  To check keep alive i can get the session data from udate
                 SLOG_INFO( "Client closed Connection" );
+
                 struct kevent deleteEvent;
                 EV_SET( &deleteEvent, event.ident, EVFILT_READ, EV_DELETE, 0, 0,
                         NULL );
+
                 kevent( workerKFd, &deleteEvent, 1, nullptr, 0, nullptr );
-                // close( event.ident );
+
                 continue;
             }
 
@@ -501,9 +508,6 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                                               // because it sets content length
 
                 // Here we create the session cookie and set header SET-COOKIE
-
-                // TODO: Make response add its headers and also the content
-                // length!!!!!!!
 
                 // Sending response
                 // TODO: This will not take a request it must somehow be coupeld
