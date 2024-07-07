@@ -79,7 +79,7 @@ void printFilledGetAddrInfo( struct addrinfo* servinfo )
         }
 
         inet_ntop( p->ai_family, addr, ipstr, sizeof ipstr );
-        printf( " %s: %s\n", ipver.c_str(), ipstr );
+        SLOG_INFO( " {0}: {1}", ipver.c_str(), ipstr );
     }
 }
 
@@ -159,11 +159,11 @@ void Server_t::serveStaticFiles( std::string_view filePath,
                                  std::string_view urlPrefix )
 {
     // We need to know the endpoint where static files are served
-    if( ! urlPrefix.empty() && urlPrefix.front() == '/' )
+    if ( !urlPrefix.empty() && urlPrefix.front() == '/' )
     {
         urlPrefix.remove_prefix( 1 );
     }
-
+    
     staticFilesUrlPrefix = urlPrefix;
 
     addRoute( static_cast<std::string>( urlPrefix ), SAND_METHOD::GET,
@@ -492,11 +492,15 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
             if ( event.flags & EVFILT_READ )
             {
-                SLOG_WARN( "Got a message on the socket to read" );
+                SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
+                           "------\n\n" );
                 // nodiscard will remind me to use the return value
                 auto httpMessage =
                     SandServer::SocketIOHandler_t::readHTTPMessage(
                         event.ident );
+                httpMessage.printObject();
+                SLOG_INFO( "\n\n------ END ------\n\n" );
+
                 // Great now we have stuff in the buffer but now we need to
                 // handle it So here comes probably routing into play?!
                 auto handler = handleRouting( httpMessage );

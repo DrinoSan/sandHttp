@@ -36,13 +36,15 @@ std::string HTTPMessage_t::stringifyHeaders()
 //-----------------------------------------------------------------------------
 void HTTPMessage_t::printHeaders()
 {
-    SLOG_INFO( "DUMP HEADERS" );
     for ( const auto& [ k, v ] : headers )
     {
-        SLOG_INFO( "Key: {0} Value: {1}", k, v );
+        SLOG_INFO( "{0} : {1}", k, v );
     }
 
-    SLOG_INFO( "HTTPMessage Body: {0}", body );
+    if( ! body.empty() )
+    {
+        SLOG_INFO( "Body: {0}", body );
+    }
 }
 
 //-----------------------------------------------------------------------------
