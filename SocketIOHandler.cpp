@@ -18,12 +18,15 @@ constexpr int32_t CHUNK_SIZE = 1000;
 /// @param msg pointer to the start of the string
 /// @param msgEnd pointer to the end of the string
 /// @return HTTPRequest_t object
-HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
+HTTPRequest_t parseRawString( const std::string& msg )
 {
     HTTPRequest_t request;
 
-    const char* head = msg;
-    const char* tail = msg;
+    const char* head = msg.c_str();
+    const char* tail = msg.c_str();
+    const char* msgEnd = msg.c_str() + msg.size();
+
+    auto end = msg.find("\r\n\r\n");
 
     // -------------------- Find request type --------------------
     while ( tail != msgEnd && *tail != ' ' )
@@ -32,6 +35,7 @@ HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
     }
     request.setMethod( std::string( head, tail ) );
 
+    head = tail;
     // -------------------- Find path --------------------
     while ( tail != msgEnd && *tail == ' ' )
     {
@@ -61,17 +65,30 @@ HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
     request.setVersion( std::string( head, tail ) );
 
     // -------------------- Parsing headers --------------------
-    if ( tail != msgEnd )
+    if ( tail != msgEnd && *tail == '\r' )
     {
         ++tail;   // Skipping '\r'
     }
+
+    if ( tail < msgEnd && *( tail + 1 ) == '\n' )
+    {
+        ++tail;
+    }
+
     head = tail;
 
-    while ( head != msgEnd && *head != '\r' )
+    while ( head != msgEnd )
     {
         while ( tail != msgEnd && *tail != '\r' )
         {
             ++tail;
+        }
+
+        if ( tail == msg.c_str() + end )
+        {
+            // Mabye not the best way ti deterine the end of the request but at
+            // the moment it works... :)
+            break;
         }
 
         const char* colon = head;
@@ -79,27 +96,20 @@ HTTPRequest_t parseRawString( const char* msg, const char* msgEnd )
         {
             ++colon;
         }
-        if ( *colon != ':' )
-        {
-            // This header seems insane :)
-            SLOG_INFO( "ERROR" );
-            break;
-        }
 
-        // TODO: SOMEWHER here is a bug....
         const char* value = colon + 1;
         while ( value != tail && *value == ' ' )
         {
             ++value;
         }
 
-        request.setHeader( std::string( head + 1, colon ),
-                           std::string( value, tail ) );
+        request.setHeader(
+            std::string( head + 1, colon ),   // +1 to skip the \n
+            std::string( value, tail ) );
         head = ++tail;   // If we dont move taile one position up then we tail
                          // is < head and we get some errors on setHeaders call.
     }
 
-    request.printObject();
     return request;
 }
 
@@ -110,8 +120,7 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 
     // Parse rawString
     // To get headers and everything
-    return parseRawString( rawString.c_str(),
-                           rawString.c_str() + rawString.size() );
+    return parseRawString( rawString );
 }
 
 //-----------------------------------------------------------------------------
@@ -173,8 +182,8 @@ void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
 
         bytesSent += send( socketFD, response.getBody().c_str() + bytesSent,
                            chunkSize, 0 );
-        
-        if( bytesSent == response.getBody().size() )
+
+        if ( bytesSent == response.getBody().size() )
         {
             break;
         }

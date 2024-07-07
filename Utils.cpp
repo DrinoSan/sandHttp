@@ -22,7 +22,7 @@ namespace SandServer
         {
             if( *tail == '\0')
             {
-                SLOG_INFO("REACHED END OF STRING");
+                SLOG_INFO("Splitting string finished");
                 res.emplace_back( head, tail);
                 break;
             }
