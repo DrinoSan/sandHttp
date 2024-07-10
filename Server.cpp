@@ -489,12 +489,14 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
             if ( event.flags & EVFILT_READ )
             {
-                SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
-                           "------\n\n" );
+                SLOG_INFO(
+                    "\n\n------ BEGIN: Got a message on the socket to read "
+                    "------\n\n" );
                 // nodiscard will remind me to use the return value
                 auto httpMessage =
                     SandServer::SocketIOHandler_t::readHTTPMessage(
                         event.ident );
+
                 httpMessage.printObject();
                 SLOG_INFO( "\n\n------ END ------\n\n" );
 
@@ -504,11 +506,16 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 
                 // This feels ugly
                 HTTPResponse_t response;
+                // TODO: Here we create the session cookie and set header
+                // SET-COOKIE
+                // TODO: Make sure getHeader searches case insensitive.. or
+                // convert all headers to lowercase and work with that
+                auto cookie =
+                    httpMessage.getHeader( "Cookie" ).value_or( "NO COOKIE" );
+
                 handler( httpMessage, response );
                 response.prepareResponse();   // This is critical to call
                                               // because it sets content length
-
-                // TODO: Here we create the session cookie and set header SET-COOKIE
 
                 // Sending response
                 SocketIOHandler_t::writeHTTPMessage( event.ident, response );

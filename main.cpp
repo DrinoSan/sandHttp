@@ -18,10 +18,23 @@ int main( void )
                      {
                          SLOG_INFO( "Called home" );
                          response.setBody( "<h1> Home </h1>" );
-                         response.setHeader("content-type", "text/html");
+                         response.setHeader( "content-type", "text/html" );
                      } );
 
-    server.serveStaticFiles("html", "/static");
+    server.addRoute(
+        "/session", SandServer::SAND_METHOD::GET,
+        [&server]( SandServer::HTTPRequest_t&  request,
+            SandServer::HTTPResponse_t& response )
+        {
+            SLOG_INFO( "Called home" );
+            response.setBody( "<h1> Trying to set session cookie </h1>" );
+            response.setHeader( "content-type", "text/html" );
+            // TODO COOKIE WIP
+            response.setHeader( "set-cookie",
+                                "sessionID=123123123 expires=Date: Thu, 11 Jul 2024 07:28:00 GMT" );
+        } );
+
+    server.serveStaticFiles( "html", "/static" );
 
     server.start( 8000 );
 
