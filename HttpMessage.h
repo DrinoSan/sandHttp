@@ -147,10 +147,16 @@ class HTTPResponse_t : public HTTPMessage_t
 {
   public:
     //-----------------------------------------------------------------------------
-    // TODO: Create a second constructor if I want to pass a custom status code
-    // and a reasonPhrase based on the statusCode
     HTTPResponse_t()
         : statusCode{ StatusCode::OK },
+          reasonPhrase{ SandServer::reasonPhrase( statusCode ) },
+          httpVersion{ "HTTP/1.1" }
+    {
+    }
+
+    //-----------------------------------------------------------------------------
+    explicit HTTPResponse_t( StatusCode statusCode_ )
+        : statusCode{ statusCode_ },
           reasonPhrase{ SandServer::reasonPhrase( statusCode ) },
           httpVersion{ "HTTP/1.1" }
     {

@@ -6,8 +6,6 @@ To test with curl and use a existing connection try:
 
 # Current open Todos:
 - TODO: need to convert all headers to lowercase befor adding
-- ADD Headers to paths which are registerd!!!! MUST DO NEXT
-  - Important for serving staticFiles content-type based of file extension
 - Check TCP keep alive
 - Big Brain: Split Server and SockerManager
   - SocketManager should take over all the socket stuff. The server has enough to do with Routing dispatching, Parsing of requests, session management and so on

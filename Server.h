@@ -2,6 +2,7 @@
 
 // System Headers
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <netdb.h>
@@ -11,7 +12,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
-#include <filesystem>
 #include <utility>
 #include <vector>
 
@@ -38,8 +38,8 @@ struct RouteKey
     std::string uri;
     SAND_METHOD method;
 
-    RouteKey( std::string  uri_, const std::string& method_ )
-        : uri(std::move( uri_ )), method( stringToMethod( method_ ) )
+    RouteKey( std::string uri_, const std::string& method_ )
+        : uri( std::move( uri_ ) ), method( stringToMethod( method_ ) )
     {
     }
 
@@ -68,7 +68,8 @@ class Server_t
     // Function to handle static files served from filePath
     /// @param filePath path of files to be served from
     /// @param urlPrefix on which endpoint url the files will be served
-    void serveStaticFiles( std::string_view filePath, std::string_view urlPrefix );
+    void serveStaticFiles( std::string_view filePath,
+                           std::string_view urlPrefix );
 
     // Function to start the server
     bool start( int32_t port );
@@ -78,7 +79,7 @@ class Server_t
     // @param method is the method type for which this endpoint should be
     // usable
     // @param function to be executed on endpoint call
-    void addRoute(
+    bool addRoute(
         const std::string& route, const SAND_METHOD& method,
         std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
             handler );
@@ -98,8 +99,10 @@ class Server_t
     // Function to read and return file content into response
     /// @param servingDir directory which is served
     /// @param file/resource which will be served and returned in response body
-    /// @return HTTPResponse_t which file content loaded in body and headers set appropriate to file extension
-    HTTPResponse_t serveFile( const fs::path& servingDir, const std::vector<std::string>& urlParts );
+    /// @return HTTPResponse_t which file content loaded in body and headers set
+    /// appropriate to file extension
+    HTTPResponse_t serveFile( const fs::path&                 servingDir,
+                              const std::vector<std::string>& urlParts );
 
   private:
     struct addrinfo hints, *servinfo, *p;
@@ -127,7 +130,7 @@ class Server_t
     // Could also use std::map<std::tuple<std::string, SAND_METHOD>,
     // std::function<void()>> routes;
     std::map<RouteKey, handlerFunc> routes;
-    
+
     std::string_view staticFilesUrlPrefix;
 };
 };   // namespace SandServer

@@ -163,7 +163,7 @@ void Server_t::serveStaticFiles( std::string_view filePath,
     {
         urlPrefix.remove_prefix( 1 );
     }
-    
+
     staticFilesUrlPrefix = urlPrefix;
 
     addRoute( static_cast<std::string>( urlPrefix ), SAND_METHOD::GET,
@@ -183,9 +183,6 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
 {
     // Get filepath
     // Append the requested path to the root directory
-
-    // Needed to check if our part for the file starts with a /
-    // TODO: test with nested files/folders
     HTTPResponse_t response;
     if ( urlParts.size() < 2 )
     {
@@ -511,11 +508,9 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                 response.prepareResponse();   // This is critical to call
                                               // because it sets content length
 
-                // Here we create the session cookie and set header SET-COOKIE
+                // TODO: Here we create the session cookie and set header SET-COOKIE
 
                 // Sending response
-                // TODO: This will not take a request it must somehow be coupeld
-                // to the routing method
                 SocketIOHandler_t::writeHTTPMessage( event.ident, response );
             }
         }
@@ -525,7 +520,6 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 //-----------------------------------------------------------------------------
 handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
 {
-    // TODO: Check if static. This IS TEMPORARY, the baby does not let me sleep
     auto requestUrlElements = splitString( request.getURI(), '/' );
     if ( !requestUrlElements.empty() &&
          requestUrlElements[ 0 ] == staticFilesUrlPrefix )
@@ -535,21 +529,12 @@ handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
                          methodToString( SAND_METHOD::GET ) } ];
     }
 
-    // if ( request.getURI().length() >= staticFilesUrlPrefix.length() &&
-    // request.getURI().substr( 0, staticFilesUrlPrefix.length() ) ==
-    // staticFilesUrlPrefix )
-    //{
-    // return routes[ { "/static", methodToString( SAND_METHOD::GET ) } ];
-    //}
-
     // 1 find existing route
     // 2 Call function bound to that route
     // 3 if no route extists return 404
     if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
          routes.end() )
     {
-        // Not found route // 404?
-        // TODO: return proper 404 message
         SLOG_ERROR( "Client asked for non existing route: {0}",
                     request.getURI() );
         return []( HTTPRequest_t& request, HTTPResponse_t& response )
@@ -560,7 +545,7 @@ handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
 }
 
 //-----------------------------------------------------------------------------
-void Server_t::addRoute(
+bool Server_t::addRoute(
     const std::string& route, const SAND_METHOD& method,
     std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
         handler )
@@ -568,8 +553,8 @@ void Server_t::addRoute(
     auto methodStr = methodToString( method );
     if ( methodStr == "UNKNOWN METHOD" )
     {
-        SLOG_ERROR( "ERROR GOT UNKNOWN METHOD WE SHOULD THROW AT THIS POINT OR "
-                    "RETURN A ERROR VALUE.... TODOOOOO" );
+        SLOG_ERROR( "Got unknown method, route will not be added" );
+        return false;
     }
 
     SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr );
@@ -585,6 +570,8 @@ void Server_t::addRoute(
     // no route found... we can add ours
     SLOG_TRACE( "Route added" );
     routes[ { route, methodStr } ] = std::move( handler );
+
+    return true;
 }
 
 }   // namespace SandServer
