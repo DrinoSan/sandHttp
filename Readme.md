@@ -6,6 +6,19 @@ To test with curl and use a existing connection try:
 
 # Current open Todos:
 - TODO: need to convert all headers to lowercase befor adding
+- TODO: Parameter in route ------> WIP Reminder :)
+  - https://example.org/?a=1&a=2&b=&=3&&&& as example for a url with query ? starts the query & is a delimiter for multiple parameters
+- TODO: Middleware support
+- TODO: Body parsing( JSON, XML...)
+- TODO: File upload for users
+- TODO: Caching or static content and dynamic responses
+- TODO: Security
+  - IP whitelisting/blacklisting
+  - CSRF protection
+  - SQL injection prevention.
+- TODO: WebSockets
+- TODO: Server-Sent Events (SSE)
+
 - Sockets - Streaming
 - Check TCP keep alive
 - Big Brain: Split Server and SockerManager
