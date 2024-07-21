@@ -37,9 +37,14 @@ struct RouteKey
 {
     std::string uri;
     SAND_METHOD method;
+    bool        isPattern;
+    std::string pathValuePlaceholder;
 
-    RouteKey( std::string uri_, const std::string& method_ )
-        : uri( std::move( uri_ ) ), method( stringToMethod( method_ ) )
+    RouteKey( std::string uri_, const std::string& method_,
+              bool isPattern_ = false, std::string pathPlaceholder_ = "" )
+        : uri( std::move( uri_ ) ), method( stringToMethod( method_ ) ),
+          isPattern( isPattern_ ),
+          pathValuePlaceholder( std::move( pathPlaceholder_ ) )
     {
     }
 
@@ -80,7 +85,7 @@ class Server_t
     // usable
     // @param function to be executed on endpoint call
     bool addRoute(
-        const std::string& route, const SAND_METHOD& method,
+        std::string&& route, const SAND_METHOD& method,
         std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
             handler );
 

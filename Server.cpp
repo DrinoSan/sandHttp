@@ -4,7 +4,6 @@
 #include <csignal>
 #include <filesystem>
 #include <functional>
-#include <signal.h>
 #include <string>
 #include <string_view>
 #include <sys/event.h>
@@ -536,12 +535,45 @@ handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
                          methodToString( SAND_METHOD::GET ) } ];
     }
 
+    for ( const auto& p : requestUrlElements )
+    {
+        SLOG_ERROR( "URL PART: {0}", p );
+    }
     // 1 find existing route
     // 2 Call function bound to that route
     // 3 if no route extists return 404
     if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
          routes.end() )
     {
+        // TODO: find a route which has isPattern true and check with client
+        // route
+        for ( const auto& routeKey : routes )
+        {
+            if ( routeKey.first.isPattern )
+            {
+                // Currenntly i only support one pathValue in url
+                if ( requestUrlElements[ 0 ] == routeKey.first.uri )
+                {
+                    SLOG_ERROR( "Returning func for {0}", routeKey.first.uri );
+                    if ( requestUrlElements.size() <= 1 )
+                    {
+                        SLOG_WARN( "No url path provided in url" );
+                    }
+
+                    // As already mentioned i only support one placeholder at
+                    // the moment. Because i am a noob!!!
+                    SLOG_WARN( "routeKey {0} urlElement {1}",
+                               routeKey.first.pathValuePlaceholder,
+                               requestUrlElements[ 1 ] );
+                    request
+                        .pathParameters[ routeKey.first.pathValuePlaceholder ] =
+                        requestUrlElements[ 1 ];
+
+                    return routeKey.second;
+                }
+            }
+        }
+
         SLOG_ERROR( "Client asked for non existing route: {0}",
                     request.getURI() );
         return []( HTTPRequest_t& request, HTTPResponse_t& response )
@@ -553,7 +585,7 @@ handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
 
 //-----------------------------------------------------------------------------
 bool Server_t::addRoute(
-    const std::string& route, const SAND_METHOD& method,
+    std::string&& route, const SAND_METHOD& method,
     std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
         handler )
 {
@@ -564,6 +596,46 @@ bool Server_t::addRoute(
         return false;
     }
 
+    // Parsing pattern
+    // Currently only one wildcard is supported
+    bool        isPattern{ true };
+    std::string pattern{};
+    for ( int32_t i = 0; i < route.size(); ++i )
+    {
+        if ( route[ i ] == '{' )
+        {
+            isPattern = !isPattern;
+            int32_t j = i;
+            ++j;
+
+            if ( j >= route.size() )
+            {
+                return false;
+            }
+
+            for ( ; j < route.size(); ++j )
+            {
+                if ( route[ j ] == '}' )
+                {
+                    isPattern = !isPattern;
+                    break;
+                }
+
+                pattern += route[ j ];
+            }
+
+            if ( isPattern )
+            {
+                route = std::string( route.data() + 1, route.data() + --i );
+                break;
+            }
+
+            SLOG_ERROR( "Invalid pattern, route will not be added" );
+            pattern.clear();
+            return false;
+        }
+    }
+
     SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr );
     // 1 Check if route and method already exist
     if ( routes.find( { route, methodStr } ) != routes.end() )
@@ -571,12 +643,14 @@ bool Server_t::addRoute(
         // We found a exsting route with method already
         SLOG_ERROR( "Route {0} with method {1} already exists", route,
                     methodStr );
+
+        return false;
     }
 
     // 2 Add route
     // no route found... we can add ours
     SLOG_TRACE( "Route added" );
-    routes[ { route, methodStr } ] = std::move( handler );
+    routes[ { route, methodStr, isPattern, pattern } ] = std::move( handler );
 
     return true;
 }

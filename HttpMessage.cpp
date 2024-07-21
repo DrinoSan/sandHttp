@@ -41,7 +41,7 @@ void HTTPMessage_t::printHeaders()
         SLOG_INFO( "{0} : {1}", k, v );
     }
 
-    if( ! body.empty() )
+    if ( !body.empty() )
     {
         SLOG_INFO( "Body: {0}", body );
     }
@@ -52,20 +52,38 @@ void HTTPMessage_t::printObject()
 {
     SLOG_TRACE( "-------------------  DUMP OBJECT BEGIN ------------------- " );
     printHeaders();
-    SLOG_TRACE( "------------------- DUMP OBJECT END ------------------- " );
+    SLOG_TRACE( "-------------------  DUMP OBJECT END   ------------------- " );
 }
 
 //-----------------------------------------------------------------------------
-std::optional<std::string> HTTPMessage_t::getHeader( const std::string& name ) const
+std::optional<std::string>
+HTTPMessage_t::getHeader( const std::string& name ) const
 {
     auto foundIt = headers.find( name );
-    if( foundIt != headers.end() )
+    if ( foundIt != headers.end() )
     {
         return foundIt->second;
     }
 
     return {};
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// HTTPRequest Definitions
+
+//-----------------------------------------------------------------------------
+std::string HTTPRequest_t::pathValue( const std::string& value )
+{
+    SLOG_ERROR( "SEARCHING IN URL: {0}", value );
+    return pathParameters[ value ];
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// HTTPResponse Definitions
 
 //-----------------------------------------------------------------------------
 void HTTPRequest_t::printObject()
@@ -76,7 +94,6 @@ void HTTPRequest_t::printObject()
     SLOG_TRACE( "Version: {0}", version );
 }
 
-
 // HTTPResponse Definitions
 
 //-----------------------------------------------------------------------------
@@ -84,7 +101,7 @@ void HTTPResponse_t::prepareResponse()
 {
     // We need:
     // 0.9 Check for body to get content-length
-    if( ! body.empty() )
+    if ( !body.empty() )
     {
         setHeader( "Content-Length", std::to_string( body.size() ) );
     }
@@ -124,10 +141,10 @@ void HTTPResponse_t::notFound()
         return;
     }
 
-    setHeader("Content-Type", "text/html");
+    setHeader( "Content-Type", "text/html" );
     setStatusCode( StatusCode::NotFound );
     setReasonPhraseByStatusCode( StatusCode::NotFound );
-    
+
     std::string line;
     while ( getline( page404, line ) )
     {

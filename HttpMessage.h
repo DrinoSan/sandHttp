@@ -133,7 +133,15 @@ class HTTPRequest_t : public HTTPMessage_t
         return version;
     }
 
+    //-----------------------------------------------------------------------------
+    [[nodiscard]]
+    std::string pathValue( const std::string& value );
+
+    //-----------------------------------------------------------------------------
     void printObject() override;
+
+  public:
+    std::map<std::string, std::string> pathParameters;
 
   private:
     std::string              method;

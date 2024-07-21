@@ -49,6 +49,7 @@ StringContainer_t splitString( const std::string& str,
 }
 
 //-----------------------------------------------------------------------------
+// wtf
 std::vector<std::string> splitString( std::string      str,
                                       std::string_view delimiter )
 {
