@@ -6,7 +6,9 @@ To test with curl and use a existing connection try:
 
 # Current open Todos:
 - TODO: need to convert all headers to lowercase befor adding
-- TODO: Parameter in route ------> WIP Reminder :)
+- TODO: Using placeholder in url for custom values
+  - Kinda works but only one placeholder is supported
+- TODO: Query in route
   - https://example.org/?a=1&a=2&b=&=3&&&& as example for a url with query ? starts the query & is a delimiter for multiple parameters
 - TODO: Middleware support
 - TODO: Body parsing( JSON, XML...)
