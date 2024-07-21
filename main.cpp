@@ -10,8 +10,6 @@ int main( void )
     // asio::io_service ios;
     SandServer::Server_t server;
 
-    // TODO: It is not really necessary to pass response as a parameter... I
-    // dont see the need for it right now!
     server.addRoute( "/home", SandServer::SAND_METHOD::GET,
                      []( SandServer::HTTPRequest_t&  request,
                          SandServer::HTTPResponse_t& response )
