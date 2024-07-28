@@ -627,6 +627,7 @@ bool Server_t::addRoute(
             if ( isPattern )
             {
                 route = std::string( route.data() + 1, route.data() + --i );
+                // TODO here we can add just the whole  url
                 break;
             }
 
