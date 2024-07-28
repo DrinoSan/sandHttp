@@ -40,6 +40,10 @@ struct RouteKey
     bool        isPattern;
     std::string pathValuePlaceholder;
 
+    // Just playing
+    std::string placeholder;
+    int32_t     placeholderBegin;
+
     RouteKey( std::string uri_, const std::string& method_,
               bool isPattern_ = false, std::string pathPlaceholder_ = "" )
         : uri( std::move( uri_ ) ), method( stringToMethod( method_ ) ),
