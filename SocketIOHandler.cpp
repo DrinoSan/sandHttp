@@ -22,11 +22,11 @@ HTTPRequest_t parseRawString( const std::string& msg )
 {
     HTTPRequest_t request;
 
-    const char* head = msg.c_str();
-    const char* tail = msg.c_str();
+    const char* head   = msg.c_str();
+    const char* tail   = msg.c_str();
     const char* msgEnd = msg.c_str() + msg.size();
 
-    auto end = msg.find("\r\n\r\n");
+    auto end = msg.find( "\r\n\r\n" );
 
     // -------------------- Find request type --------------------
     while ( tail != msgEnd && *tail != ' ' )
@@ -116,11 +116,9 @@ HTTPRequest_t parseRawString( const std::string& msg )
 //-----------------------------------------------------------------------------
 HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 {
-    std::string rawString = readFromSocket( socketFD );
-
     // Parse rawString
     // To get headers and everything
-    return parseRawString( rawString );
+    return parseRawString( readFromSocket( socketFD ) );
 }
 
 //-----------------------------------------------------------------------------

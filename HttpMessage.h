@@ -8,6 +8,8 @@
 
 // Project Headers
 #include "HttpStatusCodes.h"
+#include "Log.h"
+#include "SandMethod.h"
 
 namespace SandServer
 {
@@ -93,9 +95,9 @@ class HTTPRequest_t : public HTTPMessage_t
 
     //-----------------------------------------------------------------------------
     [[nodiscard]]
-    inline std::string getMethod() const
+    inline SAND_METHOD getMethod() const
     {
-        return method;
+        return httpMethod::stringToMethod( method );
     };
 
     //-----------------------------------------------------------------------------
@@ -135,13 +137,14 @@ class HTTPRequest_t : public HTTPMessage_t
 
     //-----------------------------------------------------------------------------
     [[nodiscard]]
-    std::string pathValue( const std::string& value );
+    std::string pathValue( const std::string& value ) const;
 
     //-----------------------------------------------------------------------------
     void printObject() override;
 
   public:
-    std::map<std::string, std::string> pathParameters;
+    std::map<std::string, std::string> query;
+    // std::map<std::string, std::string> pathParameters;
 
   private:
     std::string              method;

@@ -17,6 +17,7 @@
 
 // Project Headers
 #include "HttpMessage.h"
+#include "Router.h"
 #include "SandMethod.h"
 
 namespace fs = std::filesystem;
@@ -40,9 +41,14 @@ struct RouteKey
     bool        isPattern;
     std::string pathValuePlaceholder;
 
+    // Just playing
+    std::string placeholder;
+    int32_t     placeholderBegin;
+
     RouteKey( std::string uri_, const std::string& method_,
               bool isPattern_ = false, std::string pathPlaceholder_ = "" )
-        : uri( std::move( uri_ ) ), method( stringToMethod( method_ ) ),
+        : uri( std::move( uri_ ) ),
+          method( httpMethod::stringToMethod( method_ ) ),
           isPattern( isPattern_ ),
           pathValuePlaceholder( std::move( pathPlaceholder_ ) )
     {
@@ -84,10 +90,8 @@ class Server_t
     // @param method is the method type for which this endpoint should be
     // usable
     // @param function to be executed on endpoint call
-    bool addRoute(
-        std::string&& route, const SAND_METHOD& method,
-        std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
-            handler );
+    bool addRoute( std::string&& route, const SAND_METHOD& method,
+                   HandlerFunc handler );
 
   private:
     // Function to accept incoming connection wheter ipv6 or ipv4
@@ -136,6 +140,6 @@ class Server_t
     // std::function<void()>> routes;
     std::map<RouteKey, handlerFunc> routes;
 
-    std::string_view staticFilesUrlPrefix;
+    Router_t router;
 };
 };   // namespace SandServer

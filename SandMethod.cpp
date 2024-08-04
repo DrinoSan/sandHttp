@@ -1,7 +1,10 @@
 // Project Headers
 #include "SandMethod.h"
+#include "Log.h"
 
 namespace SandServer
+{
+namespace httpMethod
 {
 //-----------------------------------------------------------------------------
 SAND_METHOD stringToMethod( const std::string& method )
@@ -49,4 +52,5 @@ std::string methodToString( const SAND_METHOD& method )
         return "UNKNOWN METHOD";
     }
 }
+};   // namespace httpMethod
 };   // namespace SandServer
