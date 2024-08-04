@@ -14,6 +14,7 @@
 // Project HEADERS
 #include "HttpMessage.h"
 #include "Log.h"
+#include "Router.h"
 #include "SandMethod.h"
 #include "Server.h"
 #include "SocketIOHandler.h"
@@ -163,13 +164,15 @@ void Server_t::serveStaticFiles( std::string_view filePath,
         urlPrefix.remove_prefix( 1 );
     }
 
-    staticFilesUrlPrefix = urlPrefix;
+    router.staticFilesUrlPrefix = urlPrefix;
 
-    addRoute( static_cast<std::string>( urlPrefix ), SAND_METHOD::GET,
-              [ & ]( HTTPRequest_t& request, HTTPResponse_t& response )
-              {
-                  response = serveFile( filePath, request.getUrlParts() );
-              } );   // TODO: filePath -> dir or servingDir
+    auto handler = [ this, filePath ]( const HTTPRequest_t& request,
+                                       HTTPResponse_t&      response )
+    {
+        response = serveFile( filePath, request.getUrlParts() );
+    };   // TODO: filePath -> dir or servingDir
+
+    router.staticFileHandler = handler;
 
     // Serve files
     /// Content type based of file extension
@@ -499,12 +502,11 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                 httpMessage.printObject();
                 SLOG_INFO( "\n\n------ END ------\n\n" );
 
-                // Great now we have stuff in the buffer but now we need to
-                // handle it So here comes probably routing into play?!
-                auto handler = handleRouting( httpMessage );
+                auto handler = router.matchRoute( httpMessage )
+                                   .value_or( []( const HTTPRequest_t& req,
+                                                  HTTPResponse_t&      resp )
+                                              { return resp.notFound(); } );
 
-                // This feels ugly
-                HTTPResponse_t response;
                 // TODO: Here we create the session cookie and set header
                 // SET-COOKIE
                 // TODO: Make sure getHeader searches case insensitive.. or
@@ -512,6 +514,8 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
                 auto cookie =
                     httpMessage.getHeader( "Cookie" ).value_or( "NO COOKIE" );
 
+                // This feels ugly
+                HTTPResponse_t response;
                 handler( httpMessage, response );
                 response.prepareResponse();   // This is critical to call
                                               // because it sets content length
@@ -524,136 +528,140 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 }
 
 //-----------------------------------------------------------------------------
-handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
-{
-    auto requestUrlElements = splitString( request.getURI(), '/' );
-    if ( !requestUrlElements.empty() &&
-         requestUrlElements[ 0 ] == staticFilesUrlPrefix )
-    {
-        request.setUrlParts( requestUrlElements );
-        return routes[ { static_cast<std::string>( staticFilesUrlPrefix ),
-                         methodToString( SAND_METHOD::GET ) } ];
-    }
-
-    for ( const auto& p : requestUrlElements )
-    {
-        SLOG_ERROR( "URL PART: {0}", p );
-    }
-    // 1 find existing route
-    // 2 Call function bound to that route
-    // 3 if no route extists return 404
-    if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
-         routes.end() )
-    {
-        // TODO: find a route which has isPattern true and check with client
-        // route
-        for ( const auto& routeKey : routes )
-        {
-            if ( routeKey.first.isPattern )
-            {
-                // Currenntly i only support one pathValue in url
-                if ( requestUrlElements[ 0 ] == routeKey.first.uri )
-                {
-                    SLOG_ERROR( "Returning func for {0}", routeKey.first.uri );
-                    if ( requestUrlElements.size() <= 1 )
-                    {
-                        SLOG_WARN( "No url path provided in url" );
-                    }
-
-                    // As already mentioned i only support one placeholder at
-                    // the moment. Because i am a noob!!!
-                    SLOG_WARN( "routeKey {0} urlElement {1}",
-                               routeKey.first.pathValuePlaceholder,
-                               requestUrlElements[ 1 ] );
-                    request
-                        .pathParameters[ routeKey.first.pathValuePlaceholder ] =
-                        requestUrlElements[ 1 ];
-
-                    return routeKey.second;
-                }
-            }
-        }
-
-        SLOG_ERROR( "Client asked for non existing route: {0}",
-                    request.getURI() );
-        return []( HTTPRequest_t& request, HTTPResponse_t& response )
-        { return response.notFound(); };
-    }
-
-    return routes[ { request.getURI(), request.getMethod() } ];
-}
+// handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
+//{
+//    auto requestUrlElements = splitString( request.getURI(), '/' );
+//    if ( !requestUrlElements.empty() &&
+//         requestUrlElements[ 0 ] == staticFilesUrlPrefix )
+//    {
+//        request.setUrlParts( requestUrlElements );
+//        return routes[ { static_cast<std::string>( staticFilesUrlPrefix ),
+//                         methodToString( SAND_METHOD::GET ) } ];
+//    }
+//
+//    for ( const auto& p : requestUrlElements )
+//    {
+//        SLOG_ERROR( "URL PART: {0}", p );
+//    }
+//    // 1 find existing route
+//    // 2 Call function bound to that route
+//    // 3 if no route extists return 404
+//    if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
+//         routes.end() )
+//    {
+//        // TODO: find a route which has isPattern true and check with client
+//        // route
+//        for ( const auto& routeKey : routes )
+//        {
+//            if ( routeKey.first.isPattern )
+//            {
+//                // Currenntly i only support one pathValue in url
+//                if ( requestUrlElements[ 0 ] == routeKey.first.uri )
+//                {
+//                    SLOG_ERROR( "Returning func for {0}", routeKey.first.uri
+//                    ); if ( requestUrlElements.size() <= 1 )
+//                    {
+//                        SLOG_WARN( "No url path provided in url" );
+//                    }
+//
+//                    // As already mentioned i only support one placeholder at
+//                    // the moment. Because i am a noob!!!
+//                    SLOG_WARN( "routeKey {0} urlElement {1}",
+//                               routeKey.first.pathValuePlaceholder,
+//                               requestUrlElements[ 1 ] );
+//                    request
+//                        .pathParameters[ routeKey.first.pathValuePlaceholder ]
+//                        = requestUrlElements[ 1 ];
+//
+//                    return routeKey.second;
+//                }
+//            }
+//        }
+//
+//        SLOG_ERROR( "Client asked for non existing route: {0}",
+//                    request.getURI() );
+//        return []( HTTPRequest_t& request, HTTPResponse_t& response )
+//        { return response.notFound(); };
+//    }
+//
+//    return routes[ { request.getURI(), request.getMethod() } ];
+//}
 
 //-----------------------------------------------------------------------------
-bool Server_t::addRoute(
-    std::string&& route, const SAND_METHOD& method,
-    std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>
-        handler )
+bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
+                         HandlerFunc handler )
 {
-    auto methodStr = methodToString( method );
-    if ( methodStr == "UNKNOWN METHOD" )
-    {
-        SLOG_ERROR( "Got unknown method, route will not be added" );
-        return false;
-    }
 
-    // Parsing pattern
-    // Currently only one wildcard is supported
-    bool        isPattern{ true };
-    std::string pattern{};
-    for ( int32_t i = 0; i < route.size(); ++i )
-    {
-        if ( route[ i ] == '{' )
-        {
-            isPattern = !isPattern;
-            int32_t j = i;
-            ++j;
-
-            if ( j >= route.size() )
-            {
-                return false;
-            }
-
-            for ( ; j < route.size(); ++j )
-            {
-                if ( route[ j ] == '}' )
-                {
-                    isPattern = !isPattern;
-                    break;
-                }
-
-                pattern += route[ j ];
-            }
-
-            if ( isPattern )
-            {
-                route = std::string( route.data() + 1, route.data() + --i );
-                // TODO here we can add just the whole  url
-                break;
-            }
-
-            SLOG_ERROR( "Invalid pattern, route will not be added" );
-            pattern.clear();
-            return false;
-        }
-    }
-
-    SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr );
-    // 1 Check if route and method already exist
-    if ( routes.find( { route, methodStr } ) != routes.end() )
-    {
-        // We found a exsting route with method already
-        SLOG_ERROR( "Route {0} with method {1} already exists", route,
-                    methodStr );
-
-        return false;
-    }
-
-    // 2 Add route
-    // no route found... we can add ours
-    SLOG_TRACE( "Route added" );
-    routes[ { route, methodStr, isPattern, pattern } ] = std::move( handler );
-
+    router.addRoute( route, std::move( handler ), method );
     return true;
+    //    auto methodStr = httpMethod::methodToString( method );
+    //    if ( methodStr == "UNKNOWN METHOD" )
+    //    {
+    //        SLOG_ERROR( "Got unknown method, route will not be added" );
+    //        return false;
+    //    }
+    //
+    //    // Parsing pattern
+    //    // Currently only one wildcard is supported
+    //    bool        isPattern{ true };
+    //    std::string pattern{};
+    //    for ( int32_t i = 0; i < route.size(); ++i )
+    //    {
+    //        if ( route[ i ] == '{' )
+    //        {
+    //            isPattern = !isPattern;
+    //            int32_t j = i;
+    //            ++j;
+    //
+    //            if ( j >= route.size() )
+    //            {
+    //                return false;
+    //            }
+    //
+    //            for ( ; j < route.size(); ++j )
+    //            {
+    //                if ( route[ j ] == '}' )
+    //                {
+    //                    isPattern = !isPattern;
+    //                    break;
+    //                }
+    //
+    //                pattern += route[ j ];
+    //            }
+    //
+    //            if ( isPattern )
+    //            {
+    //                route = std::string( route.data() + 1, route.data() + --i
+    //                );
+    //                // TODO here we can add just the whole  url
+    //                break;
+    //            }
+    //
+    //            SLOG_ERROR( "Invalid pattern, route will not be added" );
+    //            pattern.clear();
+    //            return false;
+    //        }
+    //    }
+    //
+    //    SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr
+    //    );
+    //    // 1 Check if route and method already exist
+    //    if ( routes.find( { route, methodStr } ) != routes.end() )
+    //    {
+    //        // We found a exsting route with method already
+    //        SLOG_ERROR( "Route {0} with method {1} already exists", route,
+    //                    methodStr );
+    //
+    //        return false;
+    //    }
+    //
+    //    // 2 Add route
+    //    // no route found... we can add ours
+    //    SLOG_TRACE( "Route added" );
+    //    routes[ { route, methodStr, isPattern, pattern } ] = std::move(
+    //    handler );
+    //
+    //    return true;
 }
 
 }   // namespace SandServer

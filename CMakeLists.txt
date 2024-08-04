@@ -4,7 +4,7 @@ project(httpServer)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+#set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -21,7 +21,7 @@ add_custom_command ( OUTPUT tags
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 
 # Add executable
-add_executable(httpServer main.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp SandMethod.cpp)
+add_executable(httpServer main.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp Router.cpp SandMethod.cpp Utils.cpp )
 
 # Include Boost headers
 target_include_directories(httpServer PRIVATE

@@ -74,10 +74,17 @@ HTTPMessage_t::getHeader( const std::string& name ) const
 // HTTPRequest Definitions
 
 //-----------------------------------------------------------------------------
-std::string HTTPRequest_t::pathValue( const std::string& value )
+std::string HTTPRequest_t::pathValue( const std::string& value ) const
 {
-    SLOG_ERROR( "SEARCHING IN URL: {0}", value );
-    return pathParameters[ value ];
+    SLOG_INFO( "Called pathValue with {0}", value );
+
+    if ( query.find( value ) == query.end() )
+    {
+        SLOG_WARN( "KEY {0} not found", value );
+        return {};
+    }
+
+    return query.at( value );
 }
 
 //-----------------------------------------------------------------------------

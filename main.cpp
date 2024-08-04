@@ -11,8 +11,8 @@ int main( void )
     SandServer::Server_t server;
 
     server.addRoute( "/home", SandServer::SAND_METHOD::GET,
-                     []( SandServer::HTTPRequest_t&  request,
-                         SandServer::HTTPResponse_t& response )
+                     []( const SandServer::HTTPRequest_t& request,
+                         SandServer::HTTPResponse_t&      response )
                      {
                          SLOG_INFO( "Called home" );
                          response.setBody( "<h1> Home </h1>" );
@@ -20,8 +20,8 @@ int main( void )
                      } );
 
     server.addRoute( "/pathvalue/{pathname}", SandServer::SAND_METHOD::GET,
-                     []( SandServer::HTTPRequest_t&  request,
-                         SandServer::HTTPResponse_t& response )
+                     []( const SandServer::HTTPRequest_t& request,
+                         SandServer::HTTPResponse_t&      response )
                      {
                          SLOG_INFO( "Called pathvalue" );
                          std::string pathName = request.pathValue( "pathname" );
@@ -33,8 +33,8 @@ int main( void )
 
     server.addRoute(
         "/session", SandServer::SAND_METHOD::GET,
-        [ &server ]( SandServer::HTTPRequest_t&  request,
-                     SandServer::HTTPResponse_t& response )
+        [ &server ]( const SandServer::HTTPRequest_t& request,
+                     SandServer::HTTPResponse_t&      response )
         {
             SLOG_INFO( "Called home" );
             response.setBody( "<h1> Trying to set session cookie </h1>" );
