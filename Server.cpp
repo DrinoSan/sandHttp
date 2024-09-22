@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <sys/_endian.h>
 #include <sys/event.h>
 #include <unistd.h>
 #include <utility>
@@ -99,8 +100,13 @@ namespace SandServer
 {
 
 //-----------------------------------------------------------------------------
-Server_t::Server_t()
+Server_t::Server_t() : Server_t( "config/config.toml" ) {}
+
+//-----------------------------------------------------------------------------
+Server_t::Server_t( std::string configPath ) : config{ configPath }
 {
+    config.parse();
+    SLOG_ERROR( "CALLED SERVER CONSTRUCTOR" );
     // PREPARE getaddrinfo structure
     memset( &hints, 0, sizeof hints );
     // From man pages
@@ -132,7 +138,7 @@ Server_t::Server_t()
     }
 
     // Seting array to sane values
-    for ( int i = 0; i < NUM_WORKERS; ++i )
+    for ( int i = 0; i < config.num_workers; ++i )
     {
         memset( &wrkEvents[ i ], 0, sizeof wrkEvents[ i ] );
         memset( &wrkChangedEvents[ i ], 0, sizeof wrkChangedEvents[ i ] );
@@ -271,12 +277,13 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::start( int32_t port )
+bool Server_t::start( int32_t port_ )
 {
+    std::string port = (port_ == 0) ? config.port : std::to_string( port_ );
     SLOG_WARN( "Sarting server on port: {0}", port );
 
     int rv;
-    if ( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints,
+    if ( ( rv = getaddrinfo( "0.0.0.0", port.c_str(), &hints,
                              &servinfo ) ) != 0 )
     {
         SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
@@ -329,7 +336,7 @@ bool Server_t::start( int32_t port )
     }
 
     // Helloooo is there someone
-    if ( listen( socketFd, BACK_LOG ) == -1 )
+    if ( listen( socketFd, config.back_log ) == -1 )
     {
         SLOG_ERROR( "Failed listen" );
         exit( 1 );
@@ -338,7 +345,7 @@ bool Server_t::start( int32_t port )
     // start listnener thread here for incoming connections
     listenerThread = std::thread( &Server_t::listenAndAccept, this );
 
-    for ( int32_t i = 0; i < NUM_WORKERS; ++i )
+    for ( int32_t i = 0; i < config.num_workers; ++i )
     {
         workerThread[ i ] =
             std::thread( &Server_t::processWorkerEvents, this, i );
@@ -395,7 +402,7 @@ void Server_t::listenAndAccept()
         // EV_SET(Something something);
         // Please check:
         // https://wiki.netbsd.org/tutorials/kqueue_tutorial/#:~:text=A%20kevent%20is%20identified%20by,to%20process%20the%20respective%20event.
-        for ( int32_t i = 0; i < NUM_K_EVENTS; ++i )
+        for ( int32_t i = 0; i < config.num_k_events; ++i )
         {
             // Checking for a slot which available (No socket assigned)
             if ( wrkChangedEvents[ workerIdx ][ i ].ident != 0 )
@@ -429,7 +436,7 @@ void Server_t::listenAndAccept()
         }
 
         ++workerIdx;
-        if ( workerIdx == NUM_WORKERS )
+        if ( workerIdx == config.num_workers )
         {
             workerIdx = 0;
         }
@@ -451,7 +458,7 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
     while ( true )
     {
         numEvents = kevent( workerKFd, nullptr, 0, wrkEvents[ workerIdx ],
-                            NUM_K_EVENTS, &timeout );
+                            config.num_k_events, &timeout );
 
         if ( gotSigInt == 0 )
         {
@@ -591,7 +598,7 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
                          HandlerFunc handler )
 {
-    router.addRoute( route , std::move( handler ), method );
+    router.addRoute( route, std::move( handler ), method );
     return true;
 }
 

@@ -19,6 +19,7 @@
 #include "HttpMessage.h"
 #include "Router.h"
 #include "SandMethod.h"
+#include "config/config.h"
 
 namespace fs = std::filesystem;
 
@@ -27,9 +28,8 @@ namespace SandServer
 
 // Setting backlog for listen call
 // TODO: make this change able in config file
-constexpr int32_t NUM_K_EVENTS = 100;
-constexpr int32_t BACK_LOG     = 10;
-constexpr int32_t NUM_WORKERS  = 5;
+constexpr int32_t NUM_K_EVENTS_MAX = 100;
+constexpr int32_t NUM_WORKERS_MAX  = 5;
 
 using handlerFunc =
     std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>;
@@ -74,6 +74,7 @@ class Server_t
 
   public:
     Server_t();
+    explicit Server_t( std::string configPath );
     ~Server_t() = default;
 
     // Function to handle static files served from filePath
@@ -83,7 +84,7 @@ class Server_t
                            std::string_view urlPrefix );
 
     // Function to start the server
-    bool start( int32_t port );
+    bool start( int32_t port_ = 0 );
 
     // Function to add routes which will be handeld by the server
     // @param route is the endpoint which should be handeld
@@ -125,14 +126,14 @@ class Server_t
 
     // Kqueue stuff
     int kq;
-    int workerKqueueFD[ NUM_WORKERS ];
+    int workerKqueueFD[ NUM_WORKERS_MAX ];
 
-    struct kevent wrkEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
-    struct kevent wrkChangedEvents[ NUM_WORKERS ][ NUM_K_EVENTS ];
+    struct kevent wrkEvents[ NUM_WORKERS_MAX ][ NUM_K_EVENTS_MAX ];
+    struct kevent wrkChangedEvents[ NUM_WORKERS_MAX ][ NUM_K_EVENTS_MAX ];
 
     // Threading baby
     std::thread listenerThread;
-    std::thread workerThread[ NUM_WORKERS ];
+    std::thread workerThread[ NUM_WORKERS_MAX ];
 
     int32_t readAll( int32_t sockFd );
 
@@ -140,6 +141,7 @@ class Server_t
     // std::function<void()>> routes;
     std::map<RouteKey, handlerFunc> routes;
 
-    Router_t router;
+    Router_t       router;
+    ServerConfig_t config;
 };
 };   // namespace SandServer

@@ -47,7 +47,7 @@ int main()
 
     server.serveStaticFiles( "html", "/static" );
 
-    server.start( 8000 );
+    server.start();
 
     return 0;
 }

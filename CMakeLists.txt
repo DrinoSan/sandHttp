@@ -22,12 +22,13 @@ add_custom_command ( OUTPUT tags
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 
 # Add executable
-add_executable(httpServer main.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp Router.cpp SandMethod.cpp Utils.cpp )
+add_executable(httpServer main.cpp config/config.cpp Server.cpp HttpMessage.cpp SocketIOHandler.cpp Log.cpp Router.cpp SandMethod.cpp Utils.cpp )
 
 # Include Boost headers
 target_include_directories(httpServer PRIVATE
    ${Boost_INCLUDE_DIRS}
    ${VENDOR_INCLUDE_DIR}
+   ${CMAKE_SOURCE_DIR}
 )
 
 # Link Boost libraries
