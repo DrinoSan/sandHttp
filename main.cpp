@@ -24,7 +24,7 @@ int main()
                          SandServer::HTTPResponse_t&      response )
                      {
                          SLOG_INFO( "Called pathvalue" );
-                         std::string pathName = request.pathValue( "pathname" );
+                         std::string pathName = request.pathValue( "pathname" ).value_or("No PathValue");
                          std::string pathValue{ "<h1> Requested pathname/" };
                          pathValue = pathValue + pathName + " </h1>";
                          response.setBody( pathValue );

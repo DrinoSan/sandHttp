@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <sys/_types/_size_t.h>
 #include <sys/event.h>
 #include <unistd.h>
 #include <utility>
@@ -56,24 +57,24 @@ void* get_in_addr( struct sockaddr* sa )
 //-----------------------------------------------------------------------------
 void printFilledGetAddrInfo( struct addrinfo* servinfo )
 {
-    struct addrinfo* p;
+    struct addrinfo* p = nullptr;
     char             ipstr[ INET6_ADDRSTRLEN ];
 
     for ( p = servinfo; p != nullptr; p = p->ai_next )
     {
-        void*       addr;
+        void*       addr = nullptr;
         std::string ipver;
         if ( p->ai_family == AF_INET )
         {
             // IPv4
-            auto* ipv4 = ( struct sockaddr_in* ) p->ai_addr;
+            auto* ipv4 = reinterpret_cast<struct sockaddr_in*>( p->ai_addr );
             addr       = &( ipv4->sin_addr );
             ipver      = "IPv4";
         }
         else
         {
             // IPv6
-            auto* ipv6 = ( struct sockaddr_in6* ) p->ai_addr;
+            auto* ipv6 = reinterpret_cast<struct sockaddr_in6*>( p->ai_addr );
             addr       = &( ipv6->sin6_addr );
             ipver      = "IPv6";
         }
@@ -132,7 +133,7 @@ Server_t::Server_t()
     }
 
     // Seting array to sane values
-    for ( int i = 0; i < NUM_WORKERS; ++i )
+    for ( size_t i = 0; i < NUM_WORKERS; ++i )
     {
         memset( &wrkEvents[ i ], 0, sizeof wrkEvents[ i ] );
         memset( &wrkChangedEvents[ i ], 0, sizeof wrkChangedEvents[ i ] );
@@ -173,10 +174,6 @@ void Server_t::serveStaticFiles( std::string_view filePath,
     };   // TODO: filePath -> dir or servingDir
 
     router.staticFileHandler = handler;
-
-    // Serve files
-    /// Content type based of file extension
-    ///
 }
 
 //-----------------------------------------------------------------------------
@@ -193,8 +190,7 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
         return response;
     }
 
-    std::string filePathPart;
-    fs::path    filePath = servingDir;
+    fs::path filePath = servingDir;
     for ( std::string_view part : urlParts )
     {
         if ( part.front() == '/' )
@@ -230,7 +226,6 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
     if ( fileFD.is_open() )
     {
         std::string line;
-        int32_t     idx = 1;
         while ( std::getline( fileFD, line ) )
         {
             // TODO: Create a function to only append body or create a
@@ -275,11 +270,11 @@ bool Server_t::start( int32_t port )
 {
     SLOG_WARN( "Sarting server on port: {0}", port );
 
-    int rv;
-    if ( ( rv = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints,
-                             &servinfo ) ) != 0 )
+    int ret = 0;
+    if ( ( ret = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints,
+                              &servinfo ) ) != 0 )
     {
-        SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
+        SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( ret ) );
         return false;
     }
 
@@ -298,6 +293,7 @@ bool Server_t::start( int32_t port )
         }
 
         // Setting socket as global variable for sigInt handler
+        // TODO: Disgusting
         SOCKET_g = socketFd;
 
         // So I don't get the annoying failed to bind errors
@@ -360,7 +356,7 @@ bool Server_t::start( int32_t port )
 void Server_t::listenAndAccept()
 {
     int32_t workerIdx{ 0 };
-    char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
+    std::array<char, INET6_ADDRSTRLEN> ipStr;   // Enough space to hold ipv4 or ipv6
 
     while ( true )
     {
@@ -387,10 +383,10 @@ void Server_t::listenAndAccept()
         }
 
         inet_ntop( their_addr.ss_family,
-                   get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
-                   sizeof ipStr );
+                   get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr.data(),
+                   ipStr.size() );
 
-        SLOG_TRACE( "Server got new incoming connection from {0}", ipStr );
+        SLOG_TRACE( "Server got new incoming connection from {0}", ipStr.data() );
 
         // EV_SET(Something something);
         // Please check:
@@ -528,70 +524,10 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 }
 
 //-----------------------------------------------------------------------------
-// handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
-//{
-//    auto requestUrlElements = splitString( request.getURI(), '/' );
-//    if ( !requestUrlElements.empty() &&
-//         requestUrlElements[ 0 ] == staticFilesUrlPrefix )
-//    {
-//        request.setUrlParts( requestUrlElements );
-//        return routes[ { static_cast<std::string>( staticFilesUrlPrefix ),
-//                         methodToString( SAND_METHOD::GET ) } ];
-//    }
-//
-//    for ( const auto& p : requestUrlElements )
-//    {
-//        SLOG_ERROR( "URL PART: {0}", p );
-//    }
-//    // 1 find existing route
-//    // 2 Call function bound to that route
-//    // 3 if no route extists return 404
-//    if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
-//         routes.end() )
-//    {
-//        // TODO: find a route which has isPattern true and check with client
-//        // route
-//        for ( const auto& routeKey : routes )
-//        {
-//            if ( routeKey.first.isPattern )
-//            {
-//                // Currenntly i only support one pathValue in url
-//                if ( requestUrlElements[ 0 ] == routeKey.first.uri )
-//                {
-//                    SLOG_ERROR( "Returning func for {0}", routeKey.first.uri
-//                    ); if ( requestUrlElements.size() <= 1 )
-//                    {
-//                        SLOG_WARN( "No url path provided in url" );
-//                    }
-//
-//                    // As already mentioned i only support one placeholder at
-//                    // the moment. Because i am a noob!!!
-//                    SLOG_WARN( "routeKey {0} urlElement {1}",
-//                               routeKey.first.pathValuePlaceholder,
-//                               requestUrlElements[ 1 ] );
-//                    request
-//                        .pathParameters[ routeKey.first.pathValuePlaceholder ]
-//                        = requestUrlElements[ 1 ];
-//
-//                    return routeKey.second;
-//                }
-//            }
-//        }
-//
-//        SLOG_ERROR( "Client asked for non existing route: {0}",
-//                    request.getURI() );
-//        return []( HTTPRequest_t& request, HTTPResponse_t& response )
-//        { return response.notFound(); };
-//    }
-//
-//    return routes[ { request.getURI(), request.getMethod() } ];
-//}
-
-//-----------------------------------------------------------------------------
 bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
                          HandlerFunc handler )
 {
-    router.addRoute( route , std::move( handler ), method );
+    router.addRoute( route, std::move( handler ), method );
     return true;
 }
 

@@ -137,7 +137,8 @@ class HTTPRequest_t : public HTTPMessage_t
 
     //-----------------------------------------------------------------------------
     [[nodiscard]]
-    std::string pathValue( const std::string& value ) const;
+    std::optional<std::string>
+    pathValue( const std::string& value ) const;
 
     //-----------------------------------------------------------------------------
     void printObject() override;

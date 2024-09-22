@@ -1,5 +1,6 @@
 // System Headers
 #include <fstream>
+#include <sstream>
 #include <string>
 
 // Project Headers
@@ -19,18 +20,15 @@ void HTTPMessage_t::setHeader( const std::string& name,
 //-----------------------------------------------------------------------------
 std::string HTTPMessage_t::stringifyHeaders()
 {
-    std::string header;
+    std::stringstream ss;
     for ( const auto& [ key, value ] : headers )
     {
-        header.append( key );
-        header.append( ":" );
-        header.append( value );
-        header.append( "\r\n" );
+        ss << key << ":" << value << "\r\n";
     }
 
-    header.append( "\r\n" );
+    ss << "\r\n";
 
-    return header;
+    return ss.str();
 }
 
 //-----------------------------------------------------------------------------
@@ -74,7 +72,8 @@ HTTPMessage_t::getHeader( const std::string& name ) const
 // HTTPRequest Definitions
 
 //-----------------------------------------------------------------------------
-std::string HTTPRequest_t::pathValue( const std::string& value ) const
+std::optional<std::string>
+HTTPRequest_t::pathValue( const std::string& value ) const
 {
     SLOG_INFO( "Called pathValue with {0}", value );
 

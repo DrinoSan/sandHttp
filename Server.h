@@ -43,7 +43,7 @@ struct RouteKey
 
     // Just playing
     std::string placeholder;
-    int32_t     placeholderBegin;
+    int32_t     placeholderBegin{};
 
     RouteKey( std::string uri_, const std::string& method_,
               bool isPattern_ = false, std::string pathPlaceholder_ = "" )
