@@ -2,7 +2,7 @@
 #include "Log.h"
 #include "Server.h"
 
-int main( void )
+int main()
 {
     SandServer::Log_t::init();   // TODO move to Server_t constructor
     SLOG_INFO( "SANDRINO Initialized Log!" );

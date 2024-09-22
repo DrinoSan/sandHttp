@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(httpServer)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
@@ -31,6 +32,3 @@ target_include_directories(httpServer PRIVATE
 
 # Link Boost libraries
 target_link_libraries(httpServer PRIVATE ${Boost_LIBRARIES})
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-

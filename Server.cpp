@@ -591,77 +591,8 @@ void Server_t::processWorkerEvents( int32_t workerIdx )
 bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
                          HandlerFunc handler )
 {
-
-    router.addRoute( route, std::move( handler ), method );
+    router.addRoute( route , std::move( handler ), method );
     return true;
-    //    auto methodStr = httpMethod::methodToString( method );
-    //    if ( methodStr == "UNKNOWN METHOD" )
-    //    {
-    //        SLOG_ERROR( "Got unknown method, route will not be added" );
-    //        return false;
-    //    }
-    //
-    //    // Parsing pattern
-    //    // Currently only one wildcard is supported
-    //    bool        isPattern{ true };
-    //    std::string pattern{};
-    //    for ( int32_t i = 0; i < route.size(); ++i )
-    //    {
-    //        if ( route[ i ] == '{' )
-    //        {
-    //            isPattern = !isPattern;
-    //            int32_t j = i;
-    //            ++j;
-    //
-    //            if ( j >= route.size() )
-    //            {
-    //                return false;
-    //            }
-    //
-    //            for ( ; j < route.size(); ++j )
-    //            {
-    //                if ( route[ j ] == '}' )
-    //                {
-    //                    isPattern = !isPattern;
-    //                    break;
-    //                }
-    //
-    //                pattern += route[ j ];
-    //            }
-    //
-    //            if ( isPattern )
-    //            {
-    //                route = std::string( route.data() + 1, route.data() + --i
-    //                );
-    //                // TODO here we can add just the whole  url
-    //                break;
-    //            }
-    //
-    //            SLOG_ERROR( "Invalid pattern, route will not be added" );
-    //            pattern.clear();
-    //            return false;
-    //        }
-    //    }
-    //
-    //    SLOG_TRACE( "Adding route {0} with method type {1}", route, methodStr
-    //    );
-    //    // 1 Check if route and method already exist
-    //    if ( routes.find( { route, methodStr } ) != routes.end() )
-    //    {
-    //        // We found a exsting route with method already
-    //        SLOG_ERROR( "Route {0} with method {1} already exists", route,
-    //                    methodStr );
-    //
-    //        return false;
-    //    }
-    //
-    //    // 2 Add route
-    //    // no route found... we can add ours
-    //    SLOG_TRACE( "Route added" );
-    //    routes[ { route, methodStr, isPattern, pattern } ] = std::move(
-    //    handler );
-    //
-    //    return true;
 }
 
 }   // namespace SandServer
