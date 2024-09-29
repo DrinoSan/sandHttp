@@ -6,11 +6,11 @@ namespace SandServer
 {
 enum class SAND_METHOD
 {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-    UNKNOWN
+   GET,
+   POST,
+   PUT,
+   DELETE,
+   UNKNOWN
 };
 
 namespace httpMethod
