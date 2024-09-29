@@ -6,9 +6,15 @@ To test with curl and use a existing connection try:
 
 - curl 127.0.0.1:8000 127.0.0.1:8000 --http0.9 -v
 
+
+# TODO for Refactoring branch
+- Fix all spacing
+- Fix sigaction handling
+- Fix all C casts to static or reinterpreted stuff
+- Thinking to make server slimer
+
 # Current open Todos:
 
-- TODO fix bug with sighandler
 - TODO: create config to read from
   - Make sure the values in config are not bigger than K_NUM_WORKER_MAX and so on
   - This needs to be checked because at class level i create the 2d arrays and for that i need compile time known integer values and cant use the values from the config. Therefore i create them with some MAX value but onlu use the values from the config
