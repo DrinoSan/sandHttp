@@ -11,12 +11,12 @@ namespace SandServer
 {
 class Url_t
 {
-  public:
-    Url_t();
-    ~Url_t();
+ public:
+   Url_t();
+   ~Url_t();
 
-  public:
-    StringContainer_t query;
-    StringContainer_t urlSegments;
+ public:
+   StringContainer_t query;
+   StringContainer_t urlSegments;
 };
 }   // namespace SandServer

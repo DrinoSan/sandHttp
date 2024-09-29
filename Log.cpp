@@ -10,9 +10,9 @@ std::shared_ptr<spdlog::logger> Log_t::s_CoreLogger;
 
 void Log_t::init()
 {
-    spdlog::set_pattern( "%^[%T] %v%$ [%s:%!: %#]" );
-    spdlog::stdout_color_mt( "SandServer" );
+   spdlog::set_pattern( "%^[%T] %v%$ [%s:%!: %#]" );
+   spdlog::stdout_color_mt( "SandServer" );
 
-    s_CoreLogger = spdlog::get( "SandServer" );
+   s_CoreLogger = spdlog::get( "SandServer" );
 }
 }   // namespace SandServer

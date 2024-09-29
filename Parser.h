@@ -10,9 +10,9 @@ namespace SandServer
 //-----------------------------------------------------------------------------
 class Parser_t
 {
-  public:
-    Parser_t()  = default;
-    ~Parser_t() = default;
+ public:
+   Parser_t()  = default;
+   ~Parser_t() = default;
 };
 
 };   // namespace SandServer
