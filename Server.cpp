@@ -282,11 +282,11 @@ bool Server_t::start( int32_t port_ )
    std::string port = ( port_ == 0 ) ? config.port : std::to_string( port_ );
    SLOG_WARN( "Sarting server on port: {0}", port );
 
-   int ret = 0;
-   if ( ( ret = getaddrinfo( nullptr, std::to_string( port ).c_str(), &hints,
+   int rv = 0;
+   if ( ( rv = getaddrinfo( config.host.c_str(), config.port.c_str(), &hints,
                              &servinfo ) ) != 0 )
    {
-      SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( ret ) );
+      SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
       return false;
    }
 
@@ -395,11 +395,15 @@ void Server_t::listenAndAccept()
          continue;
       }
 
-      inet_ntop( their_addr.ss_family,
-                 get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
-                 sizeof ipStr );
+		inet_ntop( their_addr.ss_family,
+                 get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr.data(),
+                 ipStr.size() );
+		//inet_ntop( their_addr.ss_family,
+		//					  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
+		//					  sizeof ipStr );
 
-      SLOG_TRACE( "Server got new incoming connection from {0}", ipStr );
+
+      SLOG_TRACE( "Server got new incoming connection from {0}", ipStr.data() );
 
       // EV_SET(Something something);
       // Please check:
