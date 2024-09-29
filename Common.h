@@ -17,7 +17,7 @@ typename std::enable_if<( std::is_same<T, std::vector<std::string>>::value &&
                         bool>::type
 has( const T& params, const U& param )
 {
-    auto foundIt = std::find( params.begin(), params.end(), param );
-    return foundIt != params.end();
+   auto foundIt = std::find( params.begin(), params.end(), param );
+   return foundIt != params.end();
 }
 }   // namespace SandServer

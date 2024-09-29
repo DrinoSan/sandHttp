@@ -1,0 +1,21 @@
+# Server configuration
+[server]
+host = "127.0.0.1"    # IP address to bind the server
+port = 8080           # Port to listen on
+max_connections = 100 # Maximum number of concurrent connections
+backlog = 10          # Setting backlog for the listen call
+nnum_k_events = 100    # Number of kqueue events
+num_workers = 5       # Number of worker threads
+
+[logging]
+level = "info"          # Log level: debug, info, warn, error
+log_file = "server.log" # Log file path
+
+[static_files]
+serve_static = true     # Whether to serve static files
+static_dir = "./public" # Directory for static files
+
+[security]
+enable_ssl = false      # Enable SSL (true/false)
+ssl_cert = "server.crt" # Path to SSL certificate
+ssl_key = "server.key"  # Path to SSL key
