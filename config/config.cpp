@@ -2,9 +2,9 @@
 
 #include "config.h"
 #define TOML_EXCEPTIONS 1
+#include "Exceptions.h"
 #include "Log.h"
 #include "toml.h"
-#include "Exceptions.h"
 
 namespace SandServer
 {
@@ -33,6 +33,8 @@ bool ServerConfig_t::parse()
         !!tbl[ "server" ][ "back_log" ] || !!tbl[ "server" ][ "num_workers" ] )
    {
       SLOG_ERROR( "CONFIG FILE WRONG FORMATTED CHECK VALUES" );
+      SLOG_ERROR( "Using default value!" );
+
       SLOG_INFO( "Example Config: \n{0}", "\nlevel = 'info'"
                                           "\nlog_file = 'server.log'"
 
@@ -53,10 +55,10 @@ bool ServerConfig_t::parse()
                                           "\nserve_static = true"
                                           "\nstatic_dir = './public'" );
 
-      SLOG_INFO("Default values for config will be used");
+      SLOG_INFO( "Default values for config will be used" );
 
-      //throw SandServer::ConfigMissingField(
-          //"Check config, one or more fields are missing or spelled wrong" );
+      // throw SandServer::ConfigMissingField(
+      //"Check config, one or more fields are missing or spelled wrong" );
    }
 
    // Not sure if i should throw if a value does not exist...
@@ -69,12 +71,13 @@ bool ServerConfig_t::parse()
    return true;
 }
 
-
 // ----------------------------------------------------------------------------
 void ServerConfig_t::dump()
 {
-	SLOG_WARN("-------------------- DUMP CONFIG START --------------------");
-	SLOG_WARN("\nHost: {0}\nPort : {1}\nNum_k_events: {2}\nBack_log: {3}\nNum_Workers: {4}\n", host, port, num_k_events, back_log, num_workers);
-	SLOG_WARN("--------------------  DUMP CONFIG END  --------------------");
+   SLOG_WARN( "-------------------- DUMP CONFIG START --------------------" );
+   SLOG_WARN( "\nHost: {0}\nPort : {1}\nNum_k_events: {2}\nBack_log: "
+              "{3}\nNum_Workers: {4}\n",
+              host, port, num_k_events, back_log, num_workers );
+   SLOG_WARN( "--------------------  DUMP CONFIG END  --------------------" );
 }
 };   // namespace SandServer

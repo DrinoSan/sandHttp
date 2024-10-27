@@ -1,7 +1,7 @@
 // System Headers
+#include <algorithm>
 #include <string.h>
 #include <sys/socket.h>
-#include <vector>
 
 // Project Headers
 #include "HttpMessage.h"
@@ -170,10 +170,7 @@ void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
    while ( bytesSent < response.getBody().size() )
    {
       chunkSize = response.getBody().size() - bytesSent;
-      if ( chunkSize > CHUNK_SIZE )
-      {
-         chunkSize = CHUNK_SIZE;
-      }
+      chunkSize = std::min( chunkSize, CHUNK_SIZE );
 
       SLOG_INFO( "Chunk size set to {0}", chunkSize );
 

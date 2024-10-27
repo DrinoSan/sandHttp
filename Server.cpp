@@ -284,7 +284,7 @@ bool Server_t::start( int32_t port_ )
 
    int rv = 0;
    if ( ( rv = getaddrinfo( config.host.c_str(), config.port.c_str(), &hints,
-                             &servinfo ) ) != 0 )
+                            &servinfo ) ) != 0 )
    {
       SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
       return false;
@@ -395,13 +395,12 @@ void Server_t::listenAndAccept()
          continue;
       }
 
-		inet_ntop( their_addr.ss_family,
+      inet_ntop( their_addr.ss_family,
                  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr.data(),
                  ipStr.size() );
-		//inet_ntop( their_addr.ss_family,
-		//					  get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
-		//					  sizeof ipStr );
-
+      // inet_ntop( their_addr.ss_family,
+      //					  get_in_addr( ( struct
+      //sockaddr* ) &their_addr ), ipStr, 					  sizeof ipStr );
 
       SLOG_TRACE( "Server got new incoming connection from {0}", ipStr.data() );
 
