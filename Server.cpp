@@ -200,8 +200,7 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
       return response;
    }
 
-   std::string filePathPart;
-   fs::path    filePath = servingDir;
+   fs::path filePath = servingDir;
    for ( std::string_view part : urlParts )
    {
       if ( part.front() == '/' )
@@ -400,7 +399,8 @@ void Server_t::listenAndAccept()
                  ipStr.size() );
       // inet_ntop( their_addr.ss_family,
       //					  get_in_addr( ( struct
-      //sockaddr* ) &their_addr ), ipStr, 					  sizeof ipStr );
+      // sockaddr* ) &their_addr ), ipStr,
+      // sizeof ipStr );
 
       SLOG_TRACE( "Server got new incoming connection from {0}", ipStr.data() );
 
