@@ -6,6 +6,9 @@ To test with curl and use a existing connection try:
 
 - curl 127.0.0.1:8000 127.0.0.1:8000 --http0.9 -v
 
+# Currenty Working on threadpool branch
+Kevent is nice and i guess better but i want to implement a ThreadPool and also i want that the server works on Mac and Linux
+
 # Current open Todos:
 
 - TODO: create config to read from
