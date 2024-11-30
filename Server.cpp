@@ -104,7 +104,8 @@ namespace SandServer
 Server_t::Server_t() : Server_t( "config/config.toml" ) {}
 
 //-----------------------------------------------------------------------------
-Server_t::Server_t( std::string configPath ) : config{ configPath }
+Server_t::Server_t( std::string configPath, size_t numThreads )
+    : config{ configPath }, threadPool{ numThreads }
 {
 	config.parse();
 	config.dump();
@@ -316,6 +317,13 @@ bool Server_t::start( int32_t port_ )
          exit( 1 );
       }
 
+      if ( setsockopt( socketFd, SOL_SOCKET, SO_REUSEPORT, &yes,
+                       sizeof( int ) ) )
+      {
+         SLOG_ERROR( "Setsockopt" );
+         exit( 1 );
+      }
+
       // bind it to the port we passed in to getaddrinfo():
       if ( bind( socketFd, p->ai_addr, p->ai_addrlen ) == -1 )
       {
@@ -344,20 +352,20 @@ bool Server_t::start( int32_t port_ )
    }
 
    // start listnener thread here for incoming connections
-   listenerThread = std::thread( &Server_t::listenAndAccept, this );
+   listenAndAccept();
 
-   for ( int32_t i = 0; i < config.num_workers; ++i )
-   {
-      workerThread[ i ] =
-          std::thread( &Server_t::processWorkerEvents, this, i );
-   }
+   //   for ( int32_t i = 0; i < config.num_workers; ++i )
+   //{
+   //   workerThread[ i ] =
+   //       std::thread( &Server_t::processWorkerEvents, this, i );
+   //}
 
-   listenerThread.join();
+   // listenerThread.join();
 
-   for ( auto& thread : workerThread )
-   {
-      thread.join();
-   }
+   // for ( auto& thread : workerThread )
+   //{
+   //    thread.join();
+   // }
 
    SLOG_INFO( "Leaving Sand Server" );
 
@@ -367,7 +375,6 @@ bool Server_t::start( int32_t port_ )
 //-----------------------------------------------------------------------------
 void Server_t::listenAndAccept()
 {
-   int32_t workerIdx{ 0 };
    char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
 
    while ( true )
@@ -400,198 +407,77 @@ void Server_t::listenAndAccept()
 
       SLOG_TRACE( "Server got new incoming connection from {0}", ipStr );
 
-      // EV_SET(Something something);
-      // Please check:
-      // https://wiki.netbsd.org/tutorials/kqueue_tutorial/#:~:text=A%20kevent%20is%20identified%20by,to%20process%20the%20respective%20event.
-      for ( int32_t i = 0; i < config.num_k_events; ++i )
-      {
-         // Checking for a slot which available (No socket assigned)
-         if ( wrkChangedEvents[ workerIdx ][ i ].ident != 0 )
-         {
-            continue;
-         }
-
-         // Here is the point where we have to add the Session object for
-         // this connection then our EV_SET call would look like this:
-         //
-         /// EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD,
-         ///         EVFILT_READ, EV_ADD, 0, 0, SESSION_OBJECT );
-
-         EV_SET( &wrkChangedEvents[ workerIdx ][ i ], newSocketFD, EVFILT_READ,
-                 EV_ADD, 0, 0, 0 );
-
-         // We have also worker threads and each worker thread should have
-         // its own event list kevent(Something something); I set 1 because
-         // we only add one element to observation
-         if ( kevent( workerKqueueFD[ workerIdx ],
-                      &wrkChangedEvents[ workerIdx ][ i ], 1, nullptr, 0,
-                      nullptr ) < 0 )
-         {
-            if ( errno != 0 )
-            {
-               exit( EXIT_FAILURE );
-            }
-         }
-
-         break;
-      }
-
-      ++workerIdx;
-      if ( workerIdx == config.num_workers )
-      {
-         workerIdx = 0;
-      }
+      threadPool.enqueue(
+          std::bind( &Server_t::processWorkerEvents, this, newSocketFD ) );
    }
 }
 
 //-----------------------------------------------------------------------------
-void Server_t::processWorkerEvents( int32_t workerIdx )
+void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
-   // Kqueu FD
-   const int32_t workerKFd = workerKqueueFD[ workerIdx ];
-
-   int32_t numEvents{ 0 };
-
-   struct timespec timeout;
-   timeout.tv_sec  = 1;   // Check the flag every second
-   timeout.tv_nsec = 0;
-
-   while ( true )
+   SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
+              "------\n\n" );
+   // nodiscard will remind me to use the return value
+   HTTPRequest_t httpRequest;
+   try
    {
-      numEvents = kevent( workerKFd, nullptr, 0, wrkEvents[ workerIdx ],
-                          config.num_k_events, &timeout );
+      httpRequest =
+          SandServer::SocketIOHandler_t::readHTTPMessage( newSocketFD );
+   }
+   catch ( const TimeoutException& ex )
+   {
+      SLOG_ERROR( "Timeout: {0} closing socket {1}", ex.what(), newSocketFD );
+      close( newSocketFD );
+      return;
+   }
+   catch ( const ClientClosedConnectionException& ex )
+   {
+      SLOG_ERROR( "Client sent: 0 bytes. Closing socket {0}", newSocketFD );
+      close( newSocketFD );
+      return;
+   }
 
-      if ( gotSigInt == 0 )
-      {
-         break;
-      }
+   httpRequest.printObject();
+   SLOG_INFO( "\n\n------ END ------\n\n" );
 
-      if ( numEvents == -1 )
-      {
-         // Huston we got a problem
-         exit( EXIT_FAILURE );
-      }
+   auto handler =
+       router.matchRoute( httpRequest )
+           .value_or( []( const HTTPRequest_t& req, HTTPResponse_t& resp )
+                      { return resp.notFound(); } );
 
-      for ( int32_t i = 0; i < numEvents; ++i )
-      {
-         auto& event = wrkEvents[ workerIdx ][ i ];
+   // TODO: Here we create the session cookie and set header
+   // SET-COOKIE
+   // TODO: Make sure getHeader searches case insensitive.. or
+   // convert all headers to lowercase and work with that
+   auto cookie = httpRequest.getHeader( "Cookie" ).value_or( "NO COOKIE" );
 
-         if ( event.flags & EV_EOF )
-         {
-            // From what I understood EV_EOF is sent when nothing is to be
-            // read from socket
-            // TODO: Here we need to check
-            // If Client really closed connection
-            /// Header connection close
-            /// When the session/connection does not have a keep alive
-            /// Reached threshold of keep alive
-            ///  To check keep alive i can get the session data from udate
-            SLOG_INFO( "Client closed Connection" );
+   // This feels ugly
+   HTTPResponse_t response;
+   handler( httpRequest, response );
+   response.prepareResponse();   // This is critical to call
+                                 // because it sets content length
 
-            struct kevent deleteEvent;
-            EV_SET( &deleteEvent, event.ident, EVFILT_READ, EV_DELETE, 0, 0,
-                    NULL );
+   // Sending response
+   SocketIOHandler_t::writeHTTPMessage( newSocketFD, response );
 
-            kevent( workerKFd, &deleteEvent, 1, nullptr, 0, nullptr );
+   // TODO: make all headers either lowercase or uppercase look at this crap
+   if ( httpRequest.getHeader( "Connection" ).value_or( "" ) == "close" ||
+        httpRequest.getHeader( "connection" ).value_or( "" ) == "close" ||
+        httpRequest.version == "HTTP/1.0" )
+   {
+      SLOG_ERROR( "CLOSING SOCKET HTTP 1/0 or connection == close" );
+      close( newSocketFD );
+      return;
+   }
 
-            continue;
-         }
-
-         if ( event.flags & EVFILT_READ )
-         {
-            SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
-                       "------\n\n" );
-            // nodiscard will remind me to use the return value
-            auto httpMessage =
-                SandServer::SocketIOHandler_t::readHTTPMessage( event.ident );
-
-            httpMessage.printObject();
-            SLOG_INFO( "\n\n------ END ------\n\n" );
-
-            auto handler = router.matchRoute( httpMessage )
-                               .value_or( []( const HTTPRequest_t& req,
-                                              HTTPResponse_t&      resp )
-                                          { return resp.notFound(); } );
-
-            // TODO: Here we create the session cookie and set header
-            // SET-COOKIE
-            // TODO: Make sure getHeader searches case insensitive.. or
-            // convert all headers to lowercase and work with that
-            auto cookie =
-                httpMessage.getHeader( "Cookie" ).value_or( "NO COOKIE" );
-
-            // This feels ugly
-            HTTPResponse_t response;
-            handler( httpMessage, response );
-            response.prepareResponse();   // This is critical to call
-                                          // because it sets content length
-
-            // Sending response
-            SocketIOHandler_t::writeHTTPMessage( event.ident, response );
-         }
-      }
+   if ( httpRequest.getHeader( "keep-alive" ).value_or( "NOPE" ) == "NOPE" ||
+        httpRequest.getHeader( "Keep-Alive" ).value_or( "NOPE" ) == "NOPE" )
+   {
+      SLOG_ERROR( "CLOSING SOCKET keep-alive not set" );
+      close( newSocketFD );
+      return;
    }
 }
-
-//-----------------------------------------------------------------------------
-// handlerFunc Server_t::handleRouting( HTTPRequest_t& request )
-//{
-//    auto requestUrlElements = splitString( request.getURI(), '/' );
-//    if ( !requestUrlElements.empty() &&
-//         requestUrlElements[ 0 ] == staticFilesUrlPrefix )
-//    {
-//        request.setUrlParts( requestUrlElements );
-//        return routes[ { static_cast<std::string>( staticFilesUrlPrefix ),
-//                         methodToString( SAND_METHOD::GET ) } ];
-//    }
-//
-//    for ( const auto& p : requestUrlElements )
-//    {
-//        SLOG_ERROR( "URL PART: {0}", p );
-//    }
-//    // 1 find existing route
-//    // 2 Call function bound to that route
-//    // 3 if no route extists return 404
-//    if ( routes.find( RouteKey{ request.getURI(), request.getMethod() } ) ==
-//         routes.end() )
-//    {
-//        // TODO: find a route which has isPattern true and check with client
-//        // route
-//        for ( const auto& routeKey : routes )
-//        {
-//            if ( routeKey.first.isPattern )
-//            {
-//                // Currenntly i only support one pathValue in url
-//                if ( requestUrlElements[ 0 ] == routeKey.first.uri )
-//                {
-//                    SLOG_ERROR( "Returning func for {0}", routeKey.first.uri
-//                    ); if ( requestUrlElements.size() <= 1 )
-//                    {
-//                        SLOG_WARN( "No url path provided in url" );
-//                    }
-//
-//                    // As already mentioned i only support one placeholder at
-//                    // the moment. Because i am a noob!!!
-//                    SLOG_WARN( "routeKey {0} urlElement {1}",
-//                               routeKey.first.pathValuePlaceholder,
-//                               requestUrlElements[ 1 ] );
-//                    request
-//                        .pathParameters[ routeKey.first.pathValuePlaceholder ]
-//                        = requestUrlElements[ 1 ];
-//
-//                    return routeKey.second;
-//                }
-//            }
-//        }
-//
-//        SLOG_ERROR( "Client asked for non existing route: {0}",
-//                    request.getURI() );
-//        return []( HTTPRequest_t& request, HTTPResponse_t& response )
-//        { return response.notFound(); };
-//    }
-//
-//    return routes[ { request.getURI(), request.getMethod() } ];
-//}
 
 //-----------------------------------------------------------------------------
 bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,

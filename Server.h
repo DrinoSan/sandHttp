@@ -19,6 +19,7 @@
 #include "HttpMessage.h"
 #include "Router.h"
 #include "SandMethod.h"
+#include "ThreadPool.h"
 #include "config/config.h"
 
 namespace fs = std::filesystem;
@@ -71,10 +72,9 @@ struct RouteKey
 
 class Server_t
 {
-
  public:
    Server_t();
-   explicit Server_t( std::string configPath );
+   Server_t( std::string configPath, size_t numThreads = 300 );
    ~Server_t() = default;
 
    // Function to handle static files served from filePath
@@ -134,6 +134,8 @@ class Server_t
    // Threading baby
    std::thread listenerThread;
    std::thread workerThread[ NUM_WORKERS_MAX ];
+   ThreadPool_t threadPool;
+
 
    int32_t readAll( int32_t sockFd );
 
