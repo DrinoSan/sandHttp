@@ -17,13 +17,19 @@ class ThreadPool_t
    template <typename F>
    void enqueue( F&& f )
    {
-      SLOG_ERROR("ADding new task");
       taskQueue.push( std::forward<F>( f ) );
    }
+
+   bool isQueueEmpty()
+   {
+      return taskQueue.isEmpty();
+   }
+
+ public:
+   bool stop;
 
  private:
    std::vector<std::thread>           workers;
    TaskQueue_t<std::function<void()>> taskQueue;
-   bool                               stop;
 };
 };   // namespace SandServer

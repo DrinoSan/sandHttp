@@ -20,17 +20,18 @@ ThreadPool_t::ThreadPool_t( size_t numThreads ) : stop{ false }
                 // Scope for locking reasons to make sure that somehow pop is
                 // not still locked when we try to execute task()
                 {
-                   SLOG_WARN( "---THREADPOOL: Thread ID: {0} waiting for tasks",
-                              i );
-                   if ( stop && taskQueue.isEmpty() )
-                      return;
                    task = taskQueue.pop();
-                   SLOG_WARN( "---THREADPOOL: Thread ID: {0} got task task",
-                              i );
+                }
+
+                // After we notify the queue in the threadPool destructor we
+                // will get a nullptr back from .pop therefore this check
+                // then we return and can join peacefully
+                if ( !task )
+                {
+                   return;
                 }
 
                 task();
-                SLOG_WARN( "---THREADPOOL: Thread ID: {0} finished task", i );
              }
           } );
    }
@@ -40,8 +41,13 @@ ThreadPool_t::ThreadPool_t( size_t numThreads ) : stop{ false }
 ThreadPool_t::~ThreadPool_t()
 {
    stop = true;
+   taskQueue.terminate = true;
+   taskQueue.notifyAll();   // Notify all waiting threads
+
    for ( std::thread& worker : workers )
+   {
       worker.join();
+   }
 }
 
 };   // namespace SandServer

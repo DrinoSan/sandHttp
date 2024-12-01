@@ -27,7 +27,13 @@ class TaskQueue_t
    T pop()
    {
       std::unique_lock<std::mutex> lock( mutex );
-      condition.wait( lock, [ this ] { return !isEmpty(); } );
+      condition.wait( lock, [ this ] { return !isEmpty() || terminate; } );
+
+      // Check the state after waking up
+      if ( isEmpty() && terminate )
+      {
+         return nullptr;
+      }
 
       // This is so if someone uses T& = queue.front()
       // And then queue.pop() we dont get in trouble with the reference...
@@ -42,6 +48,12 @@ class TaskQueue_t
    {
       return queue.empty();
    }
+
+   // ----------------------------------------------------------------------------
+   inline void notifyAll() { condition.notify_all(); }
+
+ public:
+   bool terminate{ false };
 
  private:
    std::queue<T> queue;

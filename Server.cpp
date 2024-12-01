@@ -6,7 +6,6 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <sys/_endian.h>
 #include <sys/event.h>
 #include <unistd.h>
 #include <utility>
@@ -27,6 +26,7 @@ namespace SandServer
 std::vector<std::string> splitString( const std::string& str, char delimiter );
 };   // namespace SandServer
 
+// Not sure if this is a good strategy
 volatile sig_atomic_t gotSigInt = 1;
 int32_t               SOCKET_g;
 
@@ -35,6 +35,7 @@ void sigIntHandler( int sig )
 {
    gotSigInt = 0;
    SLOG_WARN( "Got sigInt bye bye" );
+
    shutdown( SOCKET_g, SHUT_RDWR );
    close( SOCKET_g );
 }
@@ -92,6 +93,7 @@ void sigchld_handler( int s )
    int saved_errno = errno;
    while ( waitpid( -1, nullptr, WNOHANG ) > 0 )
       ;
+
    errno = saved_errno;
 }
 };   // namespace SandServer
@@ -129,29 +131,6 @@ Server_t::Server_t( std::string configPath, size_t numThreads )
       exit( 1 );
    }
 
-   // Preparing kqueue worker threads
-   for ( int& i : workerKqueueFD )
-   {
-      if ( ( i = kqueue() ) < 0 )
-      {
-         fprintf( stderr, "Could not create worker fd for kqueue\n" );
-         exit( EXIT_FAILURE );
-      }
-   }
-
-   // Seting array to sane values
-   for ( int i = 0; i < config.num_workers; ++i )
-   {
-      memset( &wrkEvents[ i ], 0, sizeof wrkEvents[ i ] );
-      memset( &wrkChangedEvents[ i ], 0, sizeof wrkChangedEvents[ i ] );
-   }
-
-   if ( ( kq = kqueue() ) == -1 )
-   {
-      perror( "kqueue" );
-      exit( EXIT_FAILURE );
-   }
-
    saInter.sa_handler = sigIntHandler;
    saInter.sa_flags   = 0;   // or SA_RESTART
    saInter.sa_mask    = 0;
@@ -160,6 +139,12 @@ Server_t::Server_t( std::string configPath, size_t numThreads )
    {
       SLOG_ERROR( "IN WHILE LOOP GOT SIGINT TRUE" );
    }
+}
+
+//-----------------------------------------------------------------------------
+Server_t::~Server_t()
+{
+   threadPool.stop = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -354,19 +339,6 @@ bool Server_t::start( int32_t port_ )
    // start listnener thread here for incoming connections
    listenAndAccept();
 
-   //   for ( int32_t i = 0; i < config.num_workers; ++i )
-   //{
-   //   workerThread[ i ] =
-   //       std::thread( &Server_t::processWorkerEvents, this, i );
-   //}
-
-   // listenerThread.join();
-
-   // for ( auto& thread : workerThread )
-   //{
-   //    thread.join();
-   // }
-
    SLOG_INFO( "Leaving Sand Server" );
 
    return true;
@@ -391,6 +363,7 @@ void Server_t::listenAndAccept()
 
       if ( gotSigInt == 0 )
       {
+         threadPool.stop = true;
          break;
       }
 
