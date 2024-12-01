@@ -28,9 +28,9 @@ bool ServerConfig_t::parse()
       throw std::runtime_error( "Error parsing file: config.toml" );
    }
 
-   if ( !!tbl[ "server" ][ "host" ] || !!tbl[ "server" ][ "port" ] ||
-        !!tbl[ "server" ][ "num_k_events" ] ||
-        !!tbl[ "server" ][ "back_log" ] || !!tbl[ "server" ][ "num_workers" ] )
+   if ( !tbl[ "server" ][ "host" ] || !tbl[ "server" ][ "port" ] ||
+        !tbl[ "server" ][ "num_k_events" ] ||
+        !tbl[ "server" ][ "back_log" ] || !tbl[ "server" ][ "num_workers" ] )
    {
       SLOG_ERROR( "CONFIG FILE WRONG FORMATTED CHECK VALUES" );
       SLOG_INFO( "Example Config: \n{0}", "\nlevel = 'info'"
@@ -53,10 +53,7 @@ bool ServerConfig_t::parse()
                                           "\nserve_static = true"
                                           "\nstatic_dir = './public'" );
 
-      SLOG_INFO("Default values for config will be used");
-
-      //throw SandServer::ConfigMissingField(
-          //"Check config, one or more fields are missing or spelled wrong" );
+      SLOG_WARN("Default values for config will be used");
    }
 
    // Not sure if i should throw if a value does not exist...
