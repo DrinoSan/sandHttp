@@ -11,8 +11,6 @@ Kevent is nice and i guess better but i want to implement a ThreadPool and also 
 
 # Current open Todos:
 
-- TODO: create config to read from
-- TODO: need to convert all headers to lowercase befor adding
 - TODO: Query in route
   - https://example.org/?a=1&a=2&b=&=3&&&& as example for a url with query ? starts the query & is a delimiter for multiple parameters
 - TODO: Middleware support

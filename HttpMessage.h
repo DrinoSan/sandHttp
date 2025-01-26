@@ -34,6 +34,7 @@ class HTTPMessage_t
 
    //-----------------------------------------------------------------------------
    void setHeader( const std::string& name, const std::string& value );
+
    //-----------------------------------------------------------------------------
    std::string stringifyHeaders();
 

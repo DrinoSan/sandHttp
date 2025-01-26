@@ -104,8 +104,12 @@ HTTPRequest_t parseRawString( const std::string& msg )
          ++value;
       }
 
-      request.setHeader( std::string( head + 1, colon ),   // +1 to skip the \n
-                         std::string( value, tail ) );
+      auto k = std::string( head + 1, colon );
+      auto v = std::string( value, tail );
+      std::transform(k.begin(), k.end(), k.begin(), []( auto&c ){ return std::tolower(c); } );
+      std::transform(v.begin(), v.end(), v.begin(), []( auto c ){ return std::tolower(c); } );
+
+      request.setHeader(k, v);
       head = ++tail;   // If we dont move taile one position up then we tail
                        // is < head and we get some errors on setHeaders call.
    }
