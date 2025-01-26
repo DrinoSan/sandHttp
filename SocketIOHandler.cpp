@@ -185,7 +185,6 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
    return rawData;
 }
 
-// TODO: Only send CHUNK_SIZE bytes over network
 //-----------------------------------------------------------------------------
 void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
                                           const HTTPResponse_t& response )

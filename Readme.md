@@ -12,8 +12,6 @@ Kevent is nice and i guess better but i want to implement a ThreadPool and also 
 # Current open Todos:
 
 - TODO: create config to read from
-  - Make sure the values in config are not bigger than K_NUM_WORKER_MAX and so on
-  - This needs to be checked because at class level i create the 2d arrays and for that i need compile time known integer values and cant use the values from the config. Therefore i create them with some MAX value but onlu use the values from the config
 - TODO: need to convert all headers to lowercase befor adding
 - TODO: Query in route
   - https://example.org/?a=1&a=2&b=&=3&&&& as example for a url with query ? starts the query & is a delimiter for multiple parameters

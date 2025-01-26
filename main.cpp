@@ -20,13 +20,25 @@ int main()
                        response.setHeader( "content-type", "text/html" );
                     } );
 
-   server.addRoute( "/pathvalue/{pathname}", SandServer::SAND_METHOD::GET,
+   server.addRoute( "/pathvalue/{pathname}/foo/fiz", SandServer::SAND_METHOD::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {
-                       SLOG_INFO( "Called pathvalue" );
+                       SLOG_INFO( "Called pathvalue foo" );
                        std::string pathName = request.pathValue( "pathname" );
-                       std::string pathValue{ "<h1> Requested pathname/" };
+                       std::string pathValue{ "<h1> foo Requested pathname/" };
+                       pathValue = pathValue + pathName + " </h1>";
+                       response.setBody( pathValue );
+                       response.setHeader( "content-type", "text/html" );
+                    } );
+
+   server.addRoute( "/pathvalue/{pathname}/bar/fiz", SandServer::SAND_METHOD::GET,
+                    []( const SandServer::HTTPRequest_t& request,
+                        SandServer::HTTPResponse_t&      response )
+                    {
+                       SLOG_INFO( "Called pathvalue bar" );
+                       std::string pathName = request.pathValue( "pathname" );
+                       std::string pathValue{ "<h1> bar Requested pathname/" };
                        pathValue = pathValue + pathName + " </h1>";
                        response.setBody( pathValue );
                        response.setHeader( "content-type", "text/html" );

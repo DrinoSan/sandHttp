@@ -50,9 +50,9 @@ void HTTPMessage_t::printHeaders()
 //-----------------------------------------------------------------------------
 void HTTPMessage_t::printObject()
 {
-   SLOG_TRACE( "-------------------  DUMP OBJECT BEGIN ------------------- " );
+   SLOG_INFO( "-------------------  DUMP OBJECT BEGIN ------------------- " );
    printHeaders();
-   SLOG_TRACE( "-------------------  DUMP OBJECT END   ------------------- " );
+   SLOG_INFO( "-------------------  DUMP OBJECT END   ------------------- " );
 }
 
 //-----------------------------------------------------------------------------
@@ -95,10 +95,13 @@ std::string HTTPRequest_t::pathValue( const std::string& value ) const
 //-----------------------------------------------------------------------------
 void HTTPRequest_t::printObject()
 {
+   SLOG_INFO( "-------------------  DUMP REQUEST URL/Method/Version BEGIN ------------------- " );
+   SLOG_INFO( "Method: {0}", method );
+   SLOG_INFO( "URI: {0}", uri );
+   SLOG_INFO( "Version: {0}", version );
+   SLOG_INFO( "-------------------   DUMP REQUEST URL/Method/Version END  ------------------- " );
+
    HTTPMessage_t::printObject();
-   SLOG_TRACE( "Method: {0}", method );
-   SLOG_TRACE( "URI: {0}", uri );
-   SLOG_TRACE( "Version: {0}", version );
 }
 
 // HTTPResponse Definitions

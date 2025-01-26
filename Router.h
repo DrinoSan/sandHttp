@@ -17,10 +17,6 @@ using HandlerFunc =
 class Route_t
 {
  public:
-   Route_t( const Route_t& )            = default;
-   Route_t( Route_t&& )                 = default;
-   Route_t& operator=( const Route_t& ) = default;
-   Route_t& operator=( Route_t&& )      = default;
    //-----------------------------------------------------------------------------
    // Route holding information regarding route string and its handler function
    Route_t( std::string route, HandlerFunc handler, SAND_METHOD httpMethod_ );
