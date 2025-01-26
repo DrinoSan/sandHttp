@@ -29,7 +29,6 @@ bool ServerConfig_t::parse()
    }
 
    if ( !tbl[ "server" ][ "host" ] || !tbl[ "server" ][ "port" ] ||
-        !tbl[ "server" ][ "num_k_events" ] ||
         !tbl[ "server" ][ "back_log" ] || !tbl[ "server" ][ "num_workers" ] )
    {
       SLOG_ERROR( "CONFIG FILE WRONG FORMATTED CHECK VALUES" );
@@ -45,7 +44,6 @@ bool ServerConfig_t::parse()
                                           "\nbacklog = 10"
                                           "\nhost = '127.0.0.1'"
                                           "\nmax_connections = 100"
-                                          "\nnum_k_events = 100"
                                           "\nnum_workers = 5"
                                           "\nport = 8080"
 
@@ -59,9 +57,8 @@ bool ServerConfig_t::parse()
    // Not sure if i should throw if a value does not exist...
    host         = tbl[ "server" ][ "host" ].value_or( "127.0.0.1" );
    port         = tbl[ "server" ][ "port" ].value_or( "8080" );
-   num_k_events = tbl[ "server" ][ "num_k_events" ].value_or( 100 );
    back_log     = tbl[ "server" ][ "back_log" ].value_or( 10 );
-   num_workers  = tbl[ "server" ][ "num_workers" ].value_or( 5 );
+   num_workers  = tbl[ "server" ][ "num_workers" ].value_or( 100 );
 
    return true;
 }
@@ -71,7 +68,7 @@ bool ServerConfig_t::parse()
 void ServerConfig_t::dump()
 {
 	SLOG_WARN("-------------------- DUMP CONFIG START --------------------");
-	SLOG_WARN("\nHost: {0}\nPort : {1}\nNum_k_events: {2}\nBack_log: {3}\nNum_Workers: {4}\n", host, port, num_k_events, back_log, num_workers);
+	SLOG_WARN("\nHost: {0}\nPort : {1}\nBack_log: {2}\nNum_Workers: {3}\n", host, port, back_log, num_workers);
 	SLOG_WARN("--------------------  DUMP CONFIG END  --------------------");
 }
 };   // namespace SandServer

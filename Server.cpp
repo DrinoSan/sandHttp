@@ -106,11 +106,14 @@ namespace SandServer
 Server_t::Server_t() : Server_t( "config/config.toml" ) {}
 
 //-----------------------------------------------------------------------------
-Server_t::Server_t( std::string configPath, size_t numThreads )
-    : config{ configPath }, threadPool{ numThreads }
+Server_t::Server_t( std::string configPath )
+    : config{ configPath }
 {
 	config.parse();
 	config.dump();
+
+   threadPool.init( config.num_workers );
+
    // PREPARE getaddrinfo structure
    memset( &hints, 0, sizeof hints );
    // From man pages

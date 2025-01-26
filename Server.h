@@ -73,7 +73,7 @@ class Server_t
 {
  public:
    Server_t();
-   Server_t( std::string configPath, size_t numThreads = 300 );
+   Server_t( std::string configPath );
    ~Server_t();
 
    // Function to handle static files served from filePath

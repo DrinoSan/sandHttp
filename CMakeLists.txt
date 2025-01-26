@@ -1,9 +1,9 @@
-	cmake_minimum_required(VERSION 3.12)
-	project(httpServer)
-	set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+cmake_minimum_required(VERSION 3.12)
+project(httpServer)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-	set(CMAKE_BUILD_TYPE Debug)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 set(CMAKE_CXX_COMPILER clang++)
 #set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
 
@@ -15,7 +15,6 @@ message(STATUS "VENDOR_INCLUDE_DIR: ${VENDOR_INCLUDE_DIR}")
 
 # Find required packages
 find_package(Boost REQUIRED COMPONENTS system thread)
-find_package(fmt REQUIRED)
 
 set_source_files_properties( tags PROPERTIES GENERATED true)
 add_custom_command ( OUTPUT tags
@@ -34,5 +33,5 @@ target_include_directories(httpServer PRIVATE
 )
 
 # Link Boost libraries
-target_link_libraries(httpServer PRIVATE ${Boost_LIBRARIES} fmt::fmt)
+target_link_libraries(httpServer PRIVATE ${Boost_LIBRARIES})
 

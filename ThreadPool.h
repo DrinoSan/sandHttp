@@ -11,6 +11,7 @@ class ThreadPool_t
 {
 
  public:
+   ThreadPool_t() = default;
    ThreadPool_t( size_t numThreads );
    ~ThreadPool_t();
 
@@ -24,6 +25,8 @@ class ThreadPool_t
    {
       return taskQueue.isEmpty();
    }
+
+   void init( size_t numThreads );
 
  public:
    bool stop;
