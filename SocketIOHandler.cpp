@@ -1,4 +1,5 @@
 // System Headers
+#include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <vector>
@@ -144,10 +145,10 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
    // When is a full message read
    // 1) We get a /r/n/r/n
    // 2) We read 0 bytes
-   SLOG_ERROR("SAND SAND RECV START");
    while ( ( readBytes = recv( socketFD, recvBuffer, BUFFER_SIZE, 0 ) ) )
    {
-   SLOG_ERROR("GOT RECV FEEDBACK radbytes are: {0}", readBytes);
+      SLOG_ERROR( "GOT RECV FEEDBACK radbytes are: {0}, errno: {1}", readBytes,
+                  errno );
       if ( readBytes == 0 )
       {
          // Client closed connection
@@ -179,18 +180,18 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
          // We found it...
          // Now we can start to build our httpMessage
          SLOG_ERROR("WE FOUND THE END STARTING WITH HTTP MESSAGE");
+         rawData = rawData.substr( 0, found + 4 );
          break;
       }
 
       memset( recvBuffer, 0, BUFFER_SIZE );
-      readBytes = 0;
    }
 
    return rawData;
 }
 
 //-----------------------------------------------------------------------------
-void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
+void SocketIOHandler_t::writeHTTPMessage( Connection&           conn,
                                           const HTTPResponse_t& response )
 {
    int32_t bytesSent{ 0 };
@@ -206,8 +207,19 @@ void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
 
       SLOG_INFO( "Chunk size set to {0}", chunkSize );
 
-      bytesSent += send( socketFD, response.getBody().c_str() + bytesSent,
-                         chunkSize, 0 );
+      int32_t ret;
+      ret = send( conn.socketFD, response.getBody().c_str() + bytesSent,
+                  chunkSize, 0 );
+
+      if ( ret == -1 )
+      {
+         SLOG_ERROR( "Connection reset by peer on socket {0} --- ERRNO: {1}",
+                     conn.socketFD, errno );
+         conn.state = ConnectionState::CLOSED;
+         return;
+      }
+
+      bytesSent = +ret;
 
       if ( bytesSent == response.getBody().size() )
       {
@@ -215,6 +227,7 @@ void SocketIOHandler_t::writeHTTPMessage( int                   socketFD,
       }
    }
 
-   SLOG_INFO( "sent {0} bytes to client on socket {1}", bytesSent, socketFD );
+   SLOG_INFO( "sent {0} bytes to client on socket {1}", bytesSent,
+              conn.socketFD );
 }
 };   // namespace SandServer

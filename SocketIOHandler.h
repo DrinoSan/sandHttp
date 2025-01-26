@@ -2,6 +2,7 @@
 
 // Project Headers
 #include "HttpMessage.h"
+#include "Server.h"
 
 namespace SandServer
 {
@@ -19,7 +20,7 @@ class SocketIOHandler_t
    /// @param httpMessage the message we want to write to the socket
    /// TODO: This is still wrong i need to write a http message object and not a
    /// request
-   static void writeHTTPMessage( int socketFD, const HTTPResponse_t& response );
+   static void writeHTTPMessage( Connection& conn, const HTTPResponse_t& response );
 
  private:
    // Function to read data from socket
