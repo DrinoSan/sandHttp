@@ -8,7 +8,6 @@
 #include <netdb.h>
 #include <string>
 #include <string_view>
-#include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
@@ -19,6 +18,7 @@
 #include "HttpMessage.h"
 #include "Router.h"
 #include "SandMethod.h"
+#include "ThreadPool.h"
 #include "config/config.h"
 
 namespace fs = std::filesystem;
@@ -71,11 +71,10 @@ struct RouteKey
 
 class Server_t
 {
-
  public:
    Server_t();
-   explicit Server_t( std::string configPath );
-   ~Server_t() = default;
+   Server_t( std::string configPath );
+   ~Server_t();
 
    // Function to handle static files served from filePath
    /// @param filePath path of files to be served from
@@ -124,16 +123,9 @@ class Server_t
    int           socketFd;
    volatile bool isRunning{ true };
 
-   // Kqueue stuff
-   int kq;
-   int workerKqueueFD[ NUM_WORKERS_MAX ];
-
-   struct kevent wrkEvents[ NUM_WORKERS_MAX ][ NUM_K_EVENTS_MAX ];
-   struct kevent wrkChangedEvents[ NUM_WORKERS_MAX ][ NUM_K_EVENTS_MAX ];
-
    // Threading baby
    std::thread listenerThread;
-   std::thread workerThread[ NUM_WORKERS_MAX ];
+   ThreadPool_t threadPool;
 
    int32_t readAll( int32_t sockFd );
 

@@ -126,6 +126,7 @@ class HTTPRequest_t : public HTTPMessage_t
    }
 
    //-----------------------------------------------------------------------------
+   // This can actually be removed getter setter shit
    [[nodiscard]]
    inline auto getVersion() const -> std::string
    {
@@ -141,12 +142,11 @@ class HTTPRequest_t : public HTTPMessage_t
 
  public:
    std::map<std::string, std::string> query;
-   // std::map<std::string, std::string> pathParameters;
+   std::string              version;
 
  private:
    std::string              method;
    std::string              uri;
-   std::string              version;
    std::vector<std::string> urlParts;
 };
 

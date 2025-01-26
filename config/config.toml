@@ -1,11 +1,10 @@
 # Server configuration
 [server]
-host = "127.0.0.1"    # IP address to bind the server
-port = 8080           # Port to listen on
-max_connections = 100 # Maximum number of concurrent connections
-backlog = 10          # Setting backlog for the listen call
-nnum_k_events = 100    # Number of kqueue events
-num_workers = 5       # Number of worker threads
+host = "127.0.0.1"     # IP address to bind the server
+port = 8080            # Port to listen on
+max_connections = 100  # Maximum number of concurrent connections
+back_log = 120          # Setting backlog for the listen call
+num_workers = 101        # Number of worker threads
 
 [logging]
 level = "info"          # Log level: debug, info, warn, error

@@ -1,8 +1,5 @@
 #pragma once
 
-// System Headers
-#include <string>
-
 // Project Headers
 #include "HttpMessage.h"
 

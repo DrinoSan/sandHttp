@@ -7,6 +7,7 @@
 #include "HttpMessage.h"
 #include "Log.h"
 #include "SocketIOHandler.h"
+#include "Exceptions.h"
 
 namespace SandServer
 {
@@ -123,6 +124,11 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
 //-----------------------------------------------------------------------------
 std::string SocketIOHandler_t::readFromSocket( int socketFD )
 {
+   struct timeval timeout;
+   timeout.tv_sec  = 10;
+   timeout.tv_usec = 0;
+   setsockopt( socketFD, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof( timeout ) );
+
    // TODO: make BUFFER_SIZE configurable
    constexpr int32_t BUFFER_SIZE{ 1024 };
    char              recvBuffer[ BUFFER_SIZE ];
@@ -134,11 +140,30 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
    // When is a full message read
    // 1) We get a /r/n/r/n
    // 2) We read 0 bytes
+   SLOG_ERROR("SAND SAND RECV START");
    while ( ( readBytes = recv( socketFD, recvBuffer, BUFFER_SIZE, 0 ) ) )
    {
+   SLOG_ERROR("GOT RECV FEEDBACK radbytes are: {0}", readBytes);
+      if ( readBytes == 0 )
+      {
+         // Client closed connection
+         throw ClientClosedConnectionException("Client sent 0 bytes, closing connection");
+      }
       if ( readBytes < 0 )
       {
-         // We got a error
+         // We got a error like errno 24
+         if ( errno == EAGAIN || errno == EWOULDBLOCK )
+         {
+            // Timeout occurred, no data received within the timeout period
+            throw TimeoutException( "Socket read timed out." );
+         }
+         else
+         {
+            // Other errors, handle accordingly
+            SLOG_ERROR("Error receiving data: {0}", strerror( errno ));
+            break;
+         }
+
          break;
       }
 
@@ -149,6 +174,7 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
       {
          // We found it...
          // Now we can start to build our httpMessage
+         SLOG_ERROR("WE FOUND THE END STARTING WITH HTTP MESSAGE");
          break;
       }
 

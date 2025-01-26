@@ -23,7 +23,6 @@ class ServerConfig_t
 
    std::string host;
    std::string port;
-   int32_t     num_k_events;
    int32_t     back_log;
    int32_t     num_workers;
 
