@@ -468,7 +468,7 @@ bool Server_t::timeoutElapsed( const Connection& conn )
 void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
    Connection conn{ newSocketFD };
-   conn.state = ConnectionState::IDLE;
+   conn.state = ConnectionState::IDLE; // This should be set in the constructor
 
    SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
               "------\n\n" );
