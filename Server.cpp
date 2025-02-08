@@ -422,32 +422,6 @@ Server_t::generateResponse( HTTPRequest_t& httpRequest )
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::hasIncomingData( int socketFD )
-{
-   fd_set         readfds;
-   struct timeval tv;
-
-   // Zero everything and then adding our FD we want to monitor
-   FD_ZERO( &readfds );
-   FD_SET( socketFD, &readfds );
-
-   // 0 to be non-blocking
-   tv.tv_sec  = 0;
-   tv.tv_usec = 0;
-
-   int32_t result = select( socketFD + 1, &readfds, NULL, NULL, &tv );
-
-   if ( result < 0 )
-   {
-      SLOG_ERROR( "Error in select() for checking incoming data: {0}",
-                  strerror( errno ) );
-      return false;
-   }
-
-   return result > 0 && FD_ISSET( socketFD, &readfds );
-}
-
-//-----------------------------------------------------------------------------
 void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
    Connection_t conn{ newSocketFD };
@@ -466,7 +440,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
             break;
          }
 
-         if ( hasIncomingData( conn.socketFD ) )
+         if ( socketIOHandler.hasSocketDataToRead( conn.socketFD ) )
          {
             conn.state = ConnectionState_t::ACTIVE;
             // Here we update the last time we got some fresh data

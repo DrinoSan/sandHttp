@@ -21,5 +21,8 @@ class SocketIOHandler_t
    /// TODO: This is still wrong i need to write a http message object and not a
    /// request
    void writeHTTPMessage( Connection_t& conn, const HTTPResponse_t& response );
+
+   // Function to check if socket has data to read
+   bool hasSocketDataToRead( int32_t socketFD );
 };
 };   // namespace SandServer

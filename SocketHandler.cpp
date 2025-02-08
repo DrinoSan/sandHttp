@@ -72,4 +72,31 @@ void SocketHandler_t::writeToSocket( Connection_t&      conn,
    }
 }
 
+//-----------------------------------------------------------------------------
+bool SocketHandler_t::hasIncomingData( int socketFD )
+{
+   fd_set         readfds;
+   struct timeval tv;
+
+   // Zero everything and then adding our FD we want to monitor
+   FD_ZERO( &readfds );
+   FD_SET( socketFD, &readfds );
+
+   // 0 to be non-blocking
+   tv.tv_sec  = 0;
+   tv.tv_usec = 0;
+
+   int32_t result = select( socketFD + 1, &readfds, NULL, NULL, &tv );
+
+   if ( result < 0 )
+   {
+      SLOG_ERROR( "Error in select() for checking incoming data: {0}",
+                  strerror( errno ) );
+      return false;
+   }
+
+   return result > 0 && FD_ISSET( socketFD, &readfds );
+}
+
+
 };   // namespace SandServer

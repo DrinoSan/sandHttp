@@ -32,4 +32,10 @@ void SocketIOHandler_t::writeHTTPMessage( Connection_t&         conn,
 {
    SocketHandler_t::writeToSocket( conn, response.getBody() );
 }
+
+//-----------------------------------------------------------------------------
+bool SocketIOHandler_t::hasSocketDataToRead( int32_t socketFD )
+{
+   return SocketHandler_t::hasIncomingData( socketFD );
+}
 };   // namespace SandServer

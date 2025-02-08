@@ -94,9 +94,6 @@ class Server_t
    // Function to accept incoming connection wheter ipv6 or ipv4
    void listenAndAccept();
 
-   // Function to check if there is any data to read on socketFD
-   bool hasIncomingData( int socketFD );
-
    // Function to check if a connection has reached the timout
    bool timeoutElapsed( const Connection_t& conn );
 
