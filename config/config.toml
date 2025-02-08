@@ -1,6 +1,6 @@
 # Server configuration
 [server]
-host = "127.0.0.1"     # IP address to bind the server
+host = "0.0.0.0"     # IP address to bind the server
 port = 8080            # Port to listen on
 max_connections = 100  # Maximum number of concurrent connections
 back_log = 120          # Setting backlog for the listen call

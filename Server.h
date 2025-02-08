@@ -26,10 +26,26 @@ namespace fs = std::filesystem;
 namespace SandServer
 {
 
-// Setting backlog for listen call
-// TODO: make this change able in config file
-constexpr int32_t NUM_K_EVENTS_MAX = 100;
-constexpr int32_t NUM_WORKERS_MAX  = 5;
+enum ConnectionState_t
+{
+   IDLE,
+   ACTIVE,
+   CLOSED
+};
+
+struct Connection_t
+{
+   int                                   socketFD;
+   ConnectionState_t                     state;
+   std::string                           persistentBuffer;
+   std::chrono::steady_clock::time_point lastActivityTime;
+
+   Connection_t( int socket )
+       : socketFD{ socket }, state{ ConnectionState_t::IDLE },
+         lastActivityTime{ std::chrono::steady_clock::now() }
+   {
+   }
+};
 
 using handlerFunc =
     std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>;
@@ -97,8 +113,19 @@ class Server_t
    // Function to accept incoming connection wheter ipv6 or ipv4
    void listenAndAccept();
 
+   // Function to check if there is any data to read on socketFD
+   bool hasIncomingData( int socketFD );
+
+   // Function to check if a connection has reached the timout
+   bool timeoutElapsed( const Connection_t& conn );
+
    // Work baby work
    void processWorkerEvents( int32_t workerIdx );
+
+   // Function to handle incoming requests
+   /// Handling keep-alive for now
+   std::pair<HTTPResponse_t, bool>
+   generateResponse( HTTPRequest_t& httpRequest );
 
    // Function to handle incoming routes from clients
    // TODO: Later this function will probably return something
