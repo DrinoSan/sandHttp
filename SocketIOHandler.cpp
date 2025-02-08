@@ -119,42 +119,49 @@ HTTPRequest_t parseRawString( const std::string& msg )
 }
 
 //-----------------------------------------------------------------------------
-HTTPRequest_t SocketIOHandler_t::readHTTPMessage( int socketFD )
+HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
 {
    // Parse rawString
    // To get headers and everything
-   return parseRawString( readFromSocket( socketFD ) );
+   return parseRawString( readFromSocket( conn ) );
 }
 
 //-----------------------------------------------------------------------------
-std::string SocketIOHandler_t::readFromSocket( int socketFD )
+std::string SocketIOHandler_t::readFromSocket( Connection_t& conn )
 {
    struct timeval timeout;
    timeout.tv_sec  = 10;
    timeout.tv_usec = 0;
-   setsockopt( socketFD, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof( timeout ) );
+   setsockopt( conn.socketFD, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+               sizeof( timeout ) );
 
    // TODO: make BUFFER_SIZE configurable
    constexpr int32_t BUFFER_SIZE{ 1024 };
    char              recvBuffer[ BUFFER_SIZE ];
-   memset( recvBuffer, 0, BUFFER_SIZE );
 
-   std::string rawData;
-   int32_t     readBytes{ 0 };
+   // Check if persistentBuffer already contains a full HTTP request.
+   size_t endOfRequestPos = conn.persistentBuffer.find( "\r\n\r\n" );
 
-   // When is a full message read
-   // 1) We get a /r/n/r/n
-   // 2) We read 0 bytes
-   while ( ( readBytes = recv( socketFD, recvBuffer, BUFFER_SIZE, 0 ) ) )
+   while ( endOfRequestPos == std::string::npos )
    {
+      memset( recvBuffer, 0, BUFFER_SIZE );
+      int32_t readBytes = recv( conn.socketFD, recvBuffer, BUFFER_SIZE, 0 );
+
       SLOG_ERROR( "GOT RECV FEEDBACK radbytes are: {0}, errno: {1}", readBytes,
                   errno );
-      if ( readBytes == 0 )
+
+      if ( readBytes > 0 )
+      {
+         // Append new data to our persistent buffer.
+         conn.persistentBuffer.append( recvBuffer, readBytes );
+         endOfRequestPos = conn.persistentBuffer.find( "\r\n\r\n" );
+      }
+      else if ( readBytes == 0 )
       {
          // Client closed connection
          throw ClientClosedConnectionException("Client sent 0 bytes, closing connection");
       }
-      if ( readBytes < 0 )
+      else if ( readBytes < 0 )   // Error occured
       {
          // We got a error like errno 24
          if ( errno == EAGAIN || errno == EWOULDBLOCK )
@@ -166,40 +173,44 @@ std::string SocketIOHandler_t::readFromSocket( int socketFD )
          {
             // Other errors, handle accordingly
             SLOG_ERROR("Error receiving data: {0}", strerror( errno ));
-            break;
+            throw std::runtime_error( "Error receiving data from socket." );
          }
-
-         break;
       }
-
-      // C++ style to find easier the substr
-      rawData.append( recvBuffer, readBytes );
-      auto found = rawData.find( "\r\n\r\n" );
-      if ( found != std::string::npos )
-      {
-         // We found it...
-         // Now we can start to build our httpMessage
-         SLOG_ERROR("WE FOUND THE END STARTING WITH HTTP MESSAGE");
-         rawData = rawData.substr( 0, found + 4 );
-         break;
-      }
-
-      memset( recvBuffer, 0, BUFFER_SIZE );
    }
 
-   return rawData;
+   // At this point, persistentBuffer contains at least one complete request.
+   // Extract the complete request (up to and including the delimiter)...
+   std::string completeRequest =
+       conn.persistentBuffer.substr( 0, endOfRequestPos + 4 );
+
+   // remove the processed request from the persistent buffer.
+   conn.persistentBuffer.erase( 0, endOfRequestPos + 4 );
+
+   while ( !conn.persistentBuffer.empty() &&
+           isspace( conn.persistentBuffer.front() ) )
+   {
+      conn.persistentBuffer.erase( conn.persistentBuffer.begin() );
+   }
+
+   SLOG_INFO( "Extracted complete HTTP request (size: {0} bytes)",
+              completeRequest.size() );
+
+   return completeRequest;
 }
 
 //-----------------------------------------------------------------------------
-void SocketIOHandler_t::writeHTTPMessage( Connection&           conn,
+void SocketIOHandler_t::writeHTTPMessage( Connection_t&         conn,
                                           const HTTPResponse_t& response )
 {
    int32_t bytesSent{ 0 };
    int32_t chunkSize{ 0 };
 
-   while ( bytesSent < response.getBody().size() )
+   const std::string& body     = response.getBody();
+   size_t             bodySize = body.size();
+
+   while ( bytesSent < bodySize )
    {
-      chunkSize = response.getBody().size() - bytesSent;
+      chunkSize = bodySize - bytesSent;
       if ( chunkSize > CHUNK_SIZE )
       {
          chunkSize = CHUNK_SIZE;
@@ -215,16 +226,11 @@ void SocketIOHandler_t::writeHTTPMessage( Connection&           conn,
       {
          SLOG_ERROR( "Connection reset by peer on socket {0} --- ERRNO: {1}",
                      conn.socketFD, errno );
-         conn.state = ConnectionState::CLOSED;
+         conn.state = ConnectionState_t::CLOSED;
          return;
       }
 
-      bytesSent = +ret;
-
-      if ( bytesSent == response.getBody().size() )
-      {
-         break;
-      }
+      bytesSent += ret;
    }
 
    SLOG_INFO( "sent {0} bytes to client on socket {1}", bytesSent,

@@ -26,20 +26,25 @@ namespace fs = std::filesystem;
 namespace SandServer
 {
 
-enum ConnectionState
+enum ConnectionState_t
 {
    IDLE,
    ACTIVE,
    CLOSED
 };
 
-struct Connection
+struct Connection_t
 {
    int                                   socketFD;
-   ConnectionState                       state = ConnectionState::IDLE;
+   ConnectionState_t                     state;
+   std::string                           persistentBuffer;
    std::chrono::steady_clock::time_point lastActivityTime;
 
-   Connection( int socket ) : socketFD{ socket }, lastActivityTime{ std::chrono::steady_clock::now() } {}
+   Connection_t( int socket )
+       : socketFD{ socket }, state{ ConnectionState_t::IDLE },
+         lastActivityTime{ std::chrono::steady_clock::now() }
+   {
+   }
 };
 
 using handlerFunc =
@@ -112,7 +117,7 @@ class Server_t
    bool hasIncomingData( int socketFD );
 
    // Function to check if a connection has reached the timout
-   bool timeoutElapsed( const Connection& conn );
+   bool timeoutElapsed( const Connection_t& conn );
 
    // Work baby work
    void processWorkerEvents( int32_t workerIdx );

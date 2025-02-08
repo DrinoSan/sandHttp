@@ -452,7 +452,7 @@ bool Server_t::hasIncomingData( int socketFD )
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::timeoutElapsed( const Connection& conn )
+bool Server_t::timeoutElapsed( const Connection_t& conn )
 {
    // TODO make timeout setable via config
    const std::chrono::seconds IDLE_TIMEOUT( 10 );
@@ -467,26 +467,25 @@ bool Server_t::timeoutElapsed( const Connection& conn )
 //-----------------------------------------------------------------------------
 void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
-   Connection conn{ newSocketFD };
-   conn.state = ConnectionState::IDLE; // This should be set in the constructor
+   Connection_t conn{ newSocketFD };
 
    SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
               "------\n\n" );
-   // nodiscard will remind me to use the return value
-   while ( conn.state != ConnectionState::CLOSED )
+
+   while ( conn.state != ConnectionState_t::CLOSED )
    {
-      if ( conn.state == ConnectionState::IDLE )
+      if ( conn.state == ConnectionState_t::IDLE )
       {
          if ( timeoutElapsed( conn ) )
          {
             SLOG_INFO( "Connection timeout for socket {0}", conn.socketFD );
-            conn.state = ConnectionState::CLOSED;
+            conn.state = ConnectionState_t::CLOSED;
             break;
          }
 
          if ( hasIncomingData( conn.socketFD ) )
          {
-            conn.state = ConnectionState::ACTIVE;
+            conn.state = ConnectionState_t::ACTIVE;
             // Here we update the last time we got some fresh data
             conn.lastActivityTime = std::chrono::steady_clock::now();
          }
@@ -505,7 +504,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       try
       {
          httpRequest =
-             SandServer::SocketIOHandler_t::readHTTPMessage( conn.socketFD );
+             SandServer::SocketIOHandler_t::readHTTPMessage( conn );
 
          std::pair<HTTPResponse_t, bool> result =
              generateResponse( httpRequest );
@@ -530,7 +529,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       // Sending response
       SocketIOHandler_t::writeHTTPMessage( conn, httpResponse );
 
-      if ( conn.state == ConnectionState::CLOSED )
+      if ( conn.state == ConnectionState_t::CLOSED )
       {
          SLOG_ERROR( "Connection is closed" );
          close( newSocketFD );
@@ -546,11 +545,11 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       }
       else
       {
-         conn.state = ConnectionState::IDLE;
+         conn.state = ConnectionState_t::IDLE;
       }
    }
 
-   if ( conn.state == ConnectionState::CLOSED )
+   if ( conn.state == ConnectionState_t::CLOSED )
    {
       SLOG_ERROR( "Connection is closed" );
       close( newSocketFD );
