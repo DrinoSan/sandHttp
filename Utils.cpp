@@ -1,15 +1,31 @@
 // System Headers
+#include <chrono>
 #include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
 
 // Project Headers
-#include "Common.h"
 #include "Log.h"
+#include "Utils.h"
 
 namespace SandServer
 {
+namespace Utils
+{
+//-----------------------------------------------------------------------------
+bool timeoutElapsed( const Connection_t& conn )
+{
+   // TODO make timeout setable via config
+   const std::chrono::seconds IDLE_TIMEOUT( 10 );
+
+   // Check if the connection has been idle longer than the timeout
+   auto now          = std::chrono::steady_clock::now();
+   auto idleDuration = now - conn.lastActivityTime;
+
+   return idleDuration > IDLE_TIMEOUT;
+}
+
 //-----------------------------------------------------------------------------
 StringContainer_t splitString( const std::string& str, const char delimiter )
 {
@@ -77,4 +93,6 @@ std::vector<std::string> splitString( std::string      str,
    }
    return res;
 }
+
+};   // namespace Utils
 };   // namespace SandServer

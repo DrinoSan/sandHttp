@@ -22,12 +22,8 @@
 #include "Server.h"
 #include "SocketIOHandler.h"
 #include "Exceptions.h"
+#include "Utils.h"
 
-namespace SandServer
-{
-// Defined in utils.cpp
-std::vector<std::string> splitString( const std::string& str, char delimiter );
-};   // namespace SandServer
 
 // Not sure if this is a good strategy
 volatile sig_atomic_t gotSigInt = 1;
@@ -452,19 +448,6 @@ bool Server_t::hasIncomingData( int socketFD )
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::timeoutElapsed( const Connection_t& conn )
-{
-   // TODO make timeout setable via config
-   const std::chrono::seconds IDLE_TIMEOUT( 10 );
-
-   // Check if the connection has been idle longer than the timeout
-   auto now          = std::chrono::steady_clock::now();
-   auto idleDuration = now - conn.lastActivityTime;
-
-   return idleDuration > IDLE_TIMEOUT;
-}
-
-//-----------------------------------------------------------------------------
 void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
    Connection_t conn{ newSocketFD };
@@ -476,7 +459,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
    {
       if ( conn.state == ConnectionState_t::IDLE )
       {
-         if ( timeoutElapsed( conn ) )
+         if ( SandServer::Utils::timeoutElapsed( conn ) )
          {
             SLOG_INFO( "Connection timeout for socket {0}", conn.socketFD );
             conn.state = ConnectionState_t::CLOSED;
@@ -504,7 +487,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       try
       {
          httpRequest =
-             SandServer::SocketIOHandler_t::readHTTPMessage( conn );
+             socketIOHandler.readHTTPMessage( conn );
 
          std::pair<HTTPResponse_t, bool> result =
              generateResponse( httpRequest );
@@ -527,7 +510,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       }
 
       // Sending response
-      SocketIOHandler_t::writeHTTPMessage( conn, httpResponse );
+      socketIOHandler.writeHTTPMessage( conn, httpResponse );
 
       if ( conn.state == ConnectionState_t::CLOSED )
       {

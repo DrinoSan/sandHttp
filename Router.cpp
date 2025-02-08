@@ -6,20 +6,17 @@
 #include "Log.h"
 #include "Router.h"
 #include "SandMethod.h"
+#include "Utils.h"
 
 namespace SandServer
 {
-
-// Defined in utils.cpp
-std::vector<std::string> splitString( const std::string& str, char delimiter );
-
 //-----------------------------------------------------------------------------
 Route_t::Route_t( std::string route_, HandlerFunc handler_,
                   SAND_METHOD httpMethod_ )
     : route{ std::move( route_ ) }, handler{ std::move( handler_ ) },
       httpMethod{ httpMethod_ }
 {
-   routeElements = splitString( route, '/' );
+   routeElements = Utils::splitString( route, '/' );
    size_t pos    = 0;
 
    // TODO: Check if it also works with missing '}'
@@ -40,7 +37,7 @@ std::optional<HandlerFunc> Router_t::matchRoute( HTTPRequest_t& request )
 {
    SLOG_INFO( "Entering matchRoute" );
 
-   auto requestPathElements = splitString( request.getURI(), '/' );
+   auto requestPathElements = Utils::splitString( request.getURI(), '/' );
 
    if ( requestPathElements[ 0 ] == staticFilesUrlPrefix &&
         request.getMethod() == SAND_METHOD::GET )

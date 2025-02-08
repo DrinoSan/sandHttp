@@ -15,38 +15,18 @@
 #include <vector>
 
 // Project Headers
+#include "Connection.h"
 #include "HttpMessage.h"
 #include "Router.h"
 #include "SandMethod.h"
 #include "ThreadPool.h"
 #include "config/config.h"
+#include "SocketIOHandler.h"
 
 namespace fs = std::filesystem;
 
 namespace SandServer
 {
-
-enum ConnectionState_t
-{
-   IDLE,
-   ACTIVE,
-   CLOSED
-};
-
-struct Connection_t
-{
-   int                                   socketFD;
-   ConnectionState_t                     state;
-   std::string                           persistentBuffer;
-   std::chrono::steady_clock::time_point lastActivityTime;
-
-   Connection_t( int socket )
-       : socketFD{ socket }, state{ ConnectionState_t::IDLE },
-         lastActivityTime{ std::chrono::steady_clock::now() }
-   {
-   }
-};
-
 using handlerFunc =
     std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>;
 
@@ -91,6 +71,7 @@ class Server_t
    Server_t();
    Server_t( std::string configPath );
    ~Server_t();
+   SocketIOHandler_t socketIOHandler;
 
    // Function to handle static files served from filePath
    /// @param filePath path of files to be served from
