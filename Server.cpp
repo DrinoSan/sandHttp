@@ -15,15 +15,14 @@
 #include <vector>
 
 // Project HEADERS
+#include "Exceptions.h"
 #include "HttpMessage.h"
 #include "Log.h"
 #include "Router.h"
 #include "SandMethod.h"
 #include "Server.h"
 #include "SocketIOHandler.h"
-#include "Exceptions.h"
 #include "Utils.h"
-
 
 // Not sure if this is a good strategy
 volatile sig_atomic_t gotSigInt = 1;
@@ -42,48 +41,6 @@ void sigIntHandler( int sig )
 // General Helper functions
 namespace SandServer
 {
-
-//-----------------------------------------------------------------------------
-// get sockaddr, IPv4 or IPv6:
-void* get_in_addr( struct sockaddr* sa )
-{
-   if ( sa->sa_family == AF_INET )
-   {
-      return &( ( ( struct sockaddr_in* ) sa )->sin_addr );
-   }
-
-   return &( ( ( struct sockaddr_in6* ) sa )->sin6_addr );
-}
-
-//-----------------------------------------------------------------------------
-void printFilledGetAddrInfo( struct addrinfo* servinfo )
-{
-   struct addrinfo* p;
-   char             ipstr[ INET6_ADDRSTRLEN ];
-
-   for ( p = servinfo; p != nullptr; p = p->ai_next )
-   {
-      void*       addr;
-      std::string ipver;
-      if ( p->ai_family == AF_INET )
-      {
-         // IPv4
-         auto* ipv4 = ( struct sockaddr_in* ) p->ai_addr;
-         addr       = &( ipv4->sin_addr );
-         ipver      = "IPv4";
-      }
-      else
-      {
-         // IPv6
-         auto* ipv6 = ( struct sockaddr_in6* ) p->ai_addr;
-         addr       = &( ipv6->sin6_addr );
-         ipver      = "IPv6";
-      }
-
-      inet_ntop( p->ai_family, addr, ipstr, sizeof ipstr );
-      SLOG_INFO( " {0}: {1}", ipver.c_str(), ipstr );
-   }
-}
 
 //-----------------------------------------------------------------------------
 void sigchld_handler( int s )
@@ -105,22 +62,12 @@ namespace SandServer
 Server_t::Server_t() : Server_t( "config/config.toml" ) {}
 
 //-----------------------------------------------------------------------------
-Server_t::Server_t( std::string configPath )
-    : config{ configPath }
+Server_t::Server_t( std::string configPath ) : config{ configPath }
 {
-	config.parse();
-	config.dump();
+   config.parse();
+   config.dump();
 
    threadPool.init( config.num_workers );
-
-   // PREPARE getaddrinfo structure
-   memset( &hints, 0, sizeof hints );
-   // From man pages
-   // When ai_family is set to PF_UNSPEC, it means the caller will accept any
-   // protocol family supported by the operating system.
-   hints.ai_family   = AF_UNSPEC;     // don't care IPv4 or IPv6
-   hints.ai_socktype = SOCK_STREAM;   // TCP stream sockets
-   hints.ai_flags    = AI_PASSIVE;    // fill in my IP for me
 
    // Creating callback handler for child proceses
    // Reap dead childs... poor childs :(
@@ -271,65 +218,9 @@ bool Server_t::start( int32_t port_ )
    std::string port = ( port_ == 0 ) ? config.port : std::to_string( port_ );
    SLOG_WARN( "Sarting server on port: {0}", port );
 
-   int rv;
-   if ( ( rv = getaddrinfo( "0.0.0.0", port.c_str(), &hints, &servinfo ) ) !=
-        0 )
-   {
-      SLOG_ERROR( "getaddrinfo: {0}", gai_strerror( rv ) );
-      return false;
-   }
-
-   printFilledGetAddrInfo( servinfo );
-
-   // loop through all the results and bind to the first we can
-   int              yes = 1;
-   struct addrinfo* p;
-   for ( p = servinfo; p != nullptr; p = p->ai_next )
-   {
-      if ( ( socketFd = socket( p->ai_family, p->ai_socktype,
-                                p->ai_protocol ) ) == -1 )
-      {
-         SLOG_ERROR( "Creation of socket failed" );
-         continue;
-      }
-
-      // Setting socket as global variable for sigInt handler
-      SOCKET_g = socketFd;
-
-      // So I don't get the annoying failed to bind errors
-      if ( setsockopt( socketFd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                       sizeof( int ) ) == -1 )
-      {
-         SLOG_ERROR( "Setsockopt" );
-         exit( 1 );
-      }
-
-      // bind it to the port we passed in to getaddrinfo():
-      if ( bind( socketFd, p->ai_addr, p->ai_addrlen ) == -1 )
-      {
-         SLOG_ERROR( "Binding server with socketfd: {0} failed on port {1}",
-                     socketFd, port );
-         close( socketFd );
-         continue;
-      }
-
-      break;
-   }
-
-   freeaddrinfo( servinfo );   // all done with this structure
-
-   if ( p == nullptr )
-   {
-      SLOG_ERROR( "Was not able to fill addrinfo structure" );
-      exit( 1 );
-   }
-
-   // Helloooo is there someone
-   if ( listen( socketFd, config.back_log ) == -1 )
-   {
-      SLOG_ERROR( "Failed listen" );
-      exit( 1 );
-   }
+   socketHandler.init( port, config.back_log );
+   // Setting socket as global variable for sigInt handler
+   SOCKET_g = socketHandler.socketFD;
 
    // start listnener thread here for incoming connections
    listenAndAccept();
@@ -342,20 +233,9 @@ bool Server_t::start( int32_t port_ )
 //-----------------------------------------------------------------------------
 void Server_t::listenAndAccept()
 {
-   char    ipStr[ INET6_ADDRSTRLEN ];   // Enough space to hold ipv4 or ipv6
-
    while ( true )
    {
-      struct sockaddr_storage their_addr;   // connector's address information
-      socklen_t               sin_size = 0;
-
-      int newSocketFD = 0;
-
-      socklen_t addr_size = sizeof their_addr;
-      // accept is blocking so everything is cool
-      newSocketFD =
-          accept( socketFd, ( struct sockaddr* ) &their_addr, &addr_size );
-
+      auto newSocketFD = socketHandler.accept();
       if ( gotSigInt == 0 )
       {
          threadPool.stop = true;
@@ -364,16 +244,8 @@ void Server_t::listenAndAccept()
 
       if ( newSocketFD == -1 )
       {
-         SLOG_ERROR( "Accepting incoming connection failed with errno: {0}",
-                     errno );
          continue;
       }
-
-      inet_ntop( their_addr.ss_family,
-                 get_in_addr( ( struct sockaddr* ) &their_addr ), ipStr,
-                 sizeof ipStr );
-
-      SLOG_TRACE( "Server got new incoming connection from {0}", ipStr );
 
       threadPool.enqueue(
           std::bind( &Server_t::processWorkerEvents, this, newSocketFD ) );
@@ -460,8 +332,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       bool           keepAlive;
       try
       {
-         httpRequest =
-             socketIOHandler.readHTTPMessage( conn );
+         httpRequest = socketIOHandler.readHTTPMessage( conn );
 
          std::pair<HTTPResponse_t, bool> result =
              generateResponse( httpRequest );
@@ -523,4 +394,3 @@ bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
 }
 
 }   // namespace SandServer
-

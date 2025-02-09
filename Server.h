@@ -19,9 +19,10 @@
 #include "HttpMessage.h"
 #include "Router.h"
 #include "SandMethod.h"
+#include "SocketHandler.h"
+#include "SocketIOHandler.h"
 #include "ThreadPool.h"
 #include "config/config.h"
-#include "SocketIOHandler.h"
 
 namespace fs = std::filesystem;
 
@@ -72,6 +73,7 @@ class Server_t
    Server_t( std::string configPath );
    ~Server_t();
    SocketIOHandler_t socketIOHandler;
+   SocketHandler_t   socketHandler;
 
    // Function to handle static files served from filePath
    /// @param filePath path of files to be served from
@@ -129,7 +131,7 @@ class Server_t
    volatile bool isRunning{ true };
 
    // Threading baby
-   std::thread listenerThread;
+   std::thread  listenerThread;
    ThreadPool_t threadPool;
 
    int32_t readAll( int32_t sockFd );
