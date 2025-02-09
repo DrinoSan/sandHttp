@@ -23,6 +23,7 @@
 #include "SocketIOHandler.h"
 #include "ThreadPool.h"
 #include "config/config.h"
+#include "ProtocolHandler.h"
 
 namespace fs = std::filesystem;
 
@@ -93,6 +94,9 @@ class Server_t
                   HandlerFunc handler );
 
  private:
+   // Function to detect which protocol should be used
+   ProtocolType_t detectProtocol(const std::string& data);
+
    // Function to accept incoming connection wheter ipv6 or ipv4
    void listenAndAccept();
 

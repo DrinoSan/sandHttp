@@ -22,7 +22,7 @@ add_custom_command ( OUTPUT tags
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
 
 # Add executable
-add_executable(httpServer main.cpp config/config.cpp Server.cpp HttpMessage.cpp SocketHandler.cpp SocketIOHandler.cpp Log.cpp Router.cpp SandMethod.cpp Utils.cpp TaskQueue.cpp ThreadPool.cpp HttpParser.cpp )
+add_executable(httpServer main.cpp config/config.cpp Server.cpp HttpMessage.cpp SocketHandler.cpp SocketIOHandler.cpp Log.cpp Router.cpp SandMethod.cpp Utils.cpp TaskQueue.cpp ThreadPool.cpp HttpParser.cpp HttpHandler.cpp )
 
 # Include Boost headers
 # Damit wir nicht relative paths benutzem muessen sondern immer von CMAKE_SOURCE_DIR anfangen

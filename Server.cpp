@@ -16,8 +16,10 @@
 
 // Project HEADERS
 #include "Exceptions.h"
+#include "HttpHandler.h"
 #include "HttpMessage.h"
 #include "Log.h"
+#include "ProtocolHandler.h"
 #include "Router.h"
 #include "SandMethod.h"
 #include "Server.h"
@@ -216,16 +218,26 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
 bool Server_t::start( int32_t port_ )
 {
    std::string port = ( port_ == 0 ) ? config.port : std::to_string( port_ );
-   SLOG_WARN( "Sarting server on port: {0}", port );
 
-   socketHandler.init( port, config.back_log );
+   // Initialize the socketHandler (bind to all interfaces by passing an empty
+   // address string)
+   try
+   {
+      socketHandler.init( "", std::stoi( port ), config.back_log );
+   }
+   catch ( const std::exception& ex )
+   {
+      SLOG_ERROR( "SocketHandler initialization failed: {0}", ex.what() );
+      return false;
+   }
+
    // Setting socket as global variable for sigInt handler
    SOCKET_g = socketHandler.socketFD;
 
    // start listnener thread here for incoming connections
    listenAndAccept();
 
-   SLOG_INFO( "Leaving Sand Server" );
+   SLOG_WARN( "Sarting server on port: {0}", port );
 
    return true;
 }
@@ -235,7 +247,7 @@ void Server_t::listenAndAccept()
 {
    while ( true )
    {
-      auto newSocketFD = socketHandler.accept();
+      auto newSocketFD = socketHandler.acceptConnection();
       if ( gotSigInt == 0 )
       {
          threadPool.stop = true;
@@ -253,44 +265,29 @@ void Server_t::listenAndAccept()
 }
 
 //-----------------------------------------------------------------------------
-std::pair<HTTPResponse_t, bool>
-Server_t::generateResponse( HTTPRequest_t& httpRequest )
+ProtocolType_t Server_t::detectProtocol( const std::string& data )
 {
-   httpRequest.printObject();
-   SLOG_INFO( "\n\n------ END ------\n\n" );
-
-   auto handler =
-       router.matchRoute( httpRequest )
-           .value_or( []( const HTTPRequest_t& req, HTTPResponse_t& resp )
-                      { return resp.notFound(); } );
-
-   // TODO: Here we create the session cookie and set header
-   // SET-COOKIE
-   // TODO: Make sure getHeader searches case insensitive.. or
-   // convert all headers to lowercase and work with that
-   auto cookie = httpRequest.getHeader( "cookie" ).value_or( "NO COOKIE" );
-
-   // Checking for keep-alive
-   bool keepAlive{ true };
-   if ( httpRequest.getHeader( "connection" ).value_or( "" ) == "close" ||
-        httpRequest.version == "HTTP/1.0" )
+   // Checking uppercase letters because 100% no one will ever use this server
+   // and also no one ever will send lower case method names...
+   if ( data.rfind( "GET " ) || data.rfind( "POST " ) || data.rfind( "PUT " ) ||
+        data.rfind( "DELETE " ) )
    {
-      keepAlive = false;
+      return ProtocolType_t::HTTP;
+   }
+   else if ( data.find( "Upgrade: websocket" ) !=
+             std::string::npos )   // TODO: This can be wrong if the cases of
+                                   // the letters are different. But this will
+                                   // be a topic when implementing websockets
+   {
+      return ProtocolType_t::WEBSOCKET;
+   }
+   else if ( data.size() > 2 && ( static_cast<uint8_t>( data[ 0 ] ) == 0x10 ) )
+   {
+      // MQTT Connect Packet starts with 0x10
+      return ProtocolType_t::MQTT;
    }
 
-   HTTPResponse_t response;
-   if ( keepAlive == true )
-   {
-      SLOG_WARN( " SETTING keep alive header" );
-      response.setHeader( "connection", "keep-alive" );
-   }
-
-   // This feels ugly
-   handler( httpRequest, response );
-   response.prepareResponse();   // This is critical to call
-                                 // because it sets content length
-
-   return std::make_pair( response, keepAlive );
+   return ProtocolType_t::UNKNOWN;
 }
 
 //-----------------------------------------------------------------------------
@@ -301,87 +298,34 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
    SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
               "------\n\n" );
 
-   while ( conn.state != ConnectionState_t::CLOSED )
+   socketHandler.readFromSocket( conn );
+   ProtocolType_t protocol = detectProtocol( conn.persistentBuffer );
+
+   // Dispatcher
+   switch ( protocol )
    {
-      if ( conn.state == ConnectionState_t::IDLE )
-      {
-         if ( SandServer::Utils::timeoutElapsed( conn ) )
-         {
-            SLOG_INFO( "Connection timeout for socket {0}", conn.socketFD );
-            conn.state = ConnectionState_t::CLOSED;
-            break;
-         }
-
-         if ( socketIOHandler.hasSocketDataToRead( conn.socketFD ) )
-         {
-            conn.state = ConnectionState_t::ACTIVE;
-            // Here we update the last time we got some fresh data
-            conn.lastActivityTime = std::chrono::steady_clock::now();
-         }
-         else
-         {
-            // We did not get any data but due to keep-alive header we need to
-            // wait until the timeout hits
-            std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-            continue;
-         }
-      }
-
-      HTTPRequest_t  httpRequest;
-      HTTPResponse_t httpResponse;
-      bool           keepAlive;
-      try
-      {
-         httpRequest = socketIOHandler.readHTTPMessage( conn );
-
-         std::pair<HTTPResponse_t, bool> result =
-             generateResponse( httpRequest );
-
-         httpResponse = result.first;
-         keepAlive    = result.second;
-      }
-      catch ( const TimeoutException& ex )
-      {
-         SLOG_ERROR( "Timeout: {0} closing socket {1}", ex.what(),
-                     newSocketFD );
-         close( newSocketFD );
-         return;
-      }
-      catch ( const ClientClosedConnectionException& ex )
-      {
-         SLOG_ERROR( "Client sent: 0 bytes. Closing socket {0}", newSocketFD );
-         close( newSocketFD );
-         return;
-      }
-
-      // Sending response
-      socketIOHandler.writeHTTPMessage( conn, httpResponse );
-
-      if ( conn.state == ConnectionState_t::CLOSED )
-      {
-         SLOG_ERROR( "Connection is closed" );
-         close( newSocketFD );
-         return;
-      }
-
-      // TODO: make all headers either lowercase or uppercase look at this crap
-      if ( keepAlive == false )
-      {
-         SLOG_ERROR( "CLOSING SOCKET HTTP 1/0 or connection == close" );
-         close( newSocketFD );
-         return;
-      }
-      else
-      {
-         conn.state = ConnectionState_t::IDLE;
-      }
+   case ProtocolType_t::HTTP:
+   {
+      HttpHandler_t httpHandler;
+      httpHandler.handleConnection( conn, router );
+      break;
    }
-
-   if ( conn.state == ConnectionState_t::CLOSED )
+   case ProtocolType_t::WEBSOCKET:
    {
-      SLOG_ERROR( "Connection is closed" );
-      close( newSocketFD );
-      return;
+      // WebSocketHandler wsHandler;
+      // wsHandler.handleConnection(clientSocket);
+      break;
+   }
+   case ProtocolType_t::MQTT:
+   {
+      // MqttHandler mqttHandler;
+      // mqttHandler.handleConnection(clientSocket);
+      break;
+   }
+   default:
+      SLOG_ERROR( "Unknown protocol. Closing socket {0}", conn.socketFD );
+      close( conn.socketFD );
+      break;
    }
 }
 

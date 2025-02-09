@@ -2,9 +2,9 @@
 #include <string.h>
 
 // Project Headers
-#include "SocketIOHandler.h"
-#include "SocketHandler.h"
 #include "HttpParser.h"
+#include "SocketHandler.h"
+#include "SocketIOHandler.h"
 
 namespace SandServer
 {
@@ -13,6 +13,8 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
 {
    while ( conn.persistentBuffer.find( "\r\n\r\n" ) == std::string::npos )
    {
+      // No complete request in buffer yet, so read more data.
+      // This call appends any new data into conn.persistentBuffer.
       SocketHandler_t::readFromSocket( conn );
    }
 
@@ -23,7 +25,18 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
 
    conn.persistentBuffer.erase( 0, endOfRequestPos );
 
-   return HttpParser_t::parseRequest( completeRequest );
+   HTTPRequest_t request = HttpParser_t::parseRequest( completeRequest );
+
+   // Trimming begining possible whitespaces
+   size_t firstNonWhitespace =
+       conn.persistentBuffer.find_first_not_of( " \t\r\n" );
+
+   if ( firstNonWhitespace != std::string::npos )
+   {
+      conn.persistentBuffer.erase( 0, firstNonWhitespace );
+   }
+
+   return request;
 }
 
 //-----------------------------------------------------------------------------
