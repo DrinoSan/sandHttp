@@ -24,6 +24,8 @@ HandlerFunc getHandler( Router_t& router, HTTPRequest_t& httpRequest )
 
    return handler;
 }
+
+//-----------------------------------------------------------------------------
 void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
 {
    // Create a Connection_t object, initialize a persistent buffer, etc.
@@ -59,6 +61,36 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
       {
          SLOG_ERROR( "Client closed connection on socket {0}", conn.socketFD );
          break;
+      }
+      catch ( const ParsingExceptionMissingRequestline_t& ex )
+      {
+         SLOG_ERROR( "{0}", ex.what() );
+         break;
+      }
+      catch ( const ParsingExceptionMissingHeaderDelimiter_t& ex )
+      {
+         SLOG_ERROR( "{0}", ex.what() );
+         break;
+      }
+      catch ( const ParsingExceptionMalformedStatusLine_t& ex )
+      {
+         SLOG_ERROR( "{0}", ex.what() );
+         break;
+      }
+      catch ( const ParsingExceptionUnsupportedHTTPMethod_t& ex )
+      {
+         SLOG_ERROR( "{0}", ex.what() );
+         break;
+      }
+      catch ( const ParsingExceptionMalformedHeader_t& ex )
+      {
+         SLOG_ERROR( "{0}", ex.what() );
+         break;
+      }
+      catch ( ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError& ex )
+      {
+         SLOG_ERROR( "I have no idea what just happend {0}", conn.socketFD );
+         assert(false);
       }
       catch ( const std::exception& ex )
       {

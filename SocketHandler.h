@@ -33,6 +33,8 @@ class SocketHandler_t
    // Close the listening socket.
    void closeSocket();
 
+   // Reaading from socket with hardcoded timeout
+   // Function can throw
    static int32_t readFromSocket( Connection_t& conn );
    static void    writeToSocket( Connection_t& conn, const std::string& data );
 
