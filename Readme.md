@@ -46,6 +46,9 @@ Using nodiscard to force me to use the return value.
 The readHTTPMEssage will read untill we hit end delimiter \r\n\r\n
 
 - Implemented keep alive (threadpool)
+- Implemented host header check which is mandatory
+- Improved request parsing
+- Added handling for Transfer-Encoding header value ----> not tested really
 
 # Ressource
 
