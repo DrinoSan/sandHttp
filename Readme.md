@@ -45,6 +45,8 @@ Implemented readHTTPMessage method in SocketIOHandler to read full http message.
 Using nodiscard to force me to use the return value.
 The readHTTPMEssage will read untill we hit end delimiter \r\n\r\n
 
+- Implemented keep alive (threadpool)
+
 # Ressource
 
 https://www.rfc-editor.org/rfc/rfc2616#section-4
