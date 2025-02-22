@@ -68,6 +68,16 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
           "Invalid HTTP request: URI not set" );
    }
 
+   // Validate URI: length and allowed characters
+   if ( uri.length() > 2048 ||
+        uri.find_first_not_of( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu"
+                               "vwxyz0123456789-._~:/?#[]@!$&'()*+,;=" ) !=
+            std::string::npos )
+   {
+      throw ParsingExceptionMalformedStatusLine_t(
+          "Invalid URI: too long or contains illegal characters" );
+   }
+
    request.setURI( uri );
 
    // Checking  the HTTP version (should be HTTP/1.1 or HTTP/2)
@@ -122,9 +132,14 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
              "Invalid HTTP request: Header key or value is empty." );
       }
 
+      if( key.size() > 256 || value.size() > 4096 )
+      {
+         throw ParsingExceptionMalformedHeader_t(
+             "Invalid HTTP request: Header key or value is to long." );
+      }
+
+      // Setting everything to lower because its my realm
       key   = HttpLib::to_lower( key );
-      value = HttpLib::to_lower( value );   // TODO: Am i allowed to set lowercase all // the
-                           // values from the client??????
 
       request.setHeader( key, value );
       pos = headerEnd + 2;   // Move me baby to the next line

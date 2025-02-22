@@ -27,17 +27,13 @@
 #include "Utils.h"
 
 // Not sure if this is a good strategy
-volatile sig_atomic_t gotSigInt = 1;
-int32_t               SOCKET_g;
+std::atomic<bool> gotSigInt{true};
 
 //-----------------------------------------------------------------------------
-void sigIntHandler( int sig )
+void sigIntHandler(int)
 {
-   gotSigInt = 0;
-   SLOG_WARN( "Got sigInt bye bye" );
-
-   shutdown( SOCKET_g, SHUT_RDWR );
-   close( SOCKET_g );
+    gotSigInt = false;
+    SLOG_WARN("SIGINT received, shutting down gracefully...");
 }
 
 // General Helper functions
@@ -73,6 +69,7 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
 
    // Creating callback handler for child proceses
    // Reap dead childs... poor childs :(
+   // When a child process terminates, the kernel sends a SIGCHLD signal to the parent
    sa.sa_handler = sigchld_handler;
    sigemptyset( &sa.sa_mask );
    sa.sa_flags = SA_RESTART;
@@ -86,10 +83,10 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
    saInter.sa_flags   = 0;   // or SA_RESTART
    saInter.sa_mask    = 0;
 
-   if ( sigaction( SIGINT, &saInter, nullptr ) == -1 )
-   {
-      SLOG_ERROR( "IN WHILE LOOP GOT SIGINT TRUE" );
-   }
+   sigset_t mask;
+   sigemptyset(&mask);
+   sigaddset(&mask, SIGINT);
+   pthread_sigmask(SIG_BLOCK, &mask, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -231,13 +228,9 @@ bool Server_t::start( int32_t port_ )
       return false;
    }
 
-   // Setting socket as global variable for sigInt handler
-   SOCKET_g = socketHandler.socketFD;
-
    // start listnener thread here for incoming connections
-   listenAndAccept();
-
    SLOG_WARN( "Sarting server on port: {0}", port );
+   listenAndAccept();
 
    return true;
 }
@@ -245,7 +238,7 @@ bool Server_t::start( int32_t port_ )
 //-----------------------------------------------------------------------------
 void Server_t::listenAndAccept()
 {
-   while ( true )
+   while ( gotSigInt )
    {
       auto newSocketFD = socketHandler.acceptConnection();
       if ( gotSigInt == 0 )
@@ -262,6 +255,9 @@ void Server_t::listenAndAccept()
       threadPool.enqueue(
           std::bind( &Server_t::processWorkerEvents, this, newSocketFD ) );
    }
+
+   SLOG_INFO("Shutting down server...");
+   socketHandler.closeSocket();
 }
 
 //-----------------------------------------------------------------------------

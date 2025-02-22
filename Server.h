@@ -131,7 +131,6 @@ class Server_t
    struct sigaction sa;
    struct sigaction saInter;
 
-   int           socketFd;
    volatile bool isRunning{ true };
 
    // Threading baby

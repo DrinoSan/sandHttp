@@ -127,6 +127,11 @@ std::pair<HTTPResponse_t, bool> HttpHandler_t::generateResponse( HandlerFunc& ha
       SLOG_WARN( " SETTING keep alive header" );
       response.setHeader( "connection", "keep-alive" );
    }
+   else
+   {
+      response.setHeader( "connection", "close" );
+   }
+
 
    // This feels ugly
    handler( httpRequest, response );
