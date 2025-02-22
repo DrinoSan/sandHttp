@@ -23,6 +23,10 @@ Kevent is nice and i guess better but i want to implement a ThreadPool and also 
   - SQL injection prevention.
 - TODO: WebSockets
 - TODO: Server-Sent Events (SSE)
+--------
+- TODO: Need to add hasPrefix hasSuffix to HttpLib String library
+- TODO: Need to to sanity checks on url
+- TODO: Fix request parsing I forgot to check for content-type and then read until we have the full request.
 
 - Sockets - Streaming
 - Check TCP keep alive
@@ -49,6 +53,7 @@ The readHTTPMEssage will read untill we hit end delimiter \r\n\r\n
 - Implemented host header check which is mandatory
 - Improved request parsing
 - Added handling for Transfer-Encoding header value ----> not tested really
+- Minimal string lib for prefix suffix removing reverse string
 
 # Ressource
 
