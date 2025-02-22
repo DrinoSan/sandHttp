@@ -4,6 +4,7 @@
 #include "HttpParser.h"
 #include "Exceptions.h"
 #include "Utils.h"
+#include "lib/stringLib.h"
 
 namespace SandServer
 {
@@ -112,12 +113,8 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
       std::string key   = rawMessage.substr( pos, colon - pos );
       std::string value = rawMessage.substr( colon + 1, headerEnd - colon - 1 );
 
-      // Trim leading spaces from value
-      size_t valueStart = value.find_first_not_of( " \t" );
-      if ( valueStart != std::string::npos )
-      {
-         value = value.substr( valueStart );
-      }
+      // Trim spaces and stuff
+      value = HttpLib::trim( value, std::string( " \t" ) );
 
       if ( key.empty() || value.empty() )
       {
@@ -125,10 +122,9 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
              "Invalid HTTP request: Header key or value is empty." );
       }
 
-      std::transform( key.begin(), key.end(), key.begin(), ::tolower );
-      std::transform( value.begin(), value.end(), value.begin(),
-                      ::tolower );   // TODO: Am i allowed to set lowercase all
-                                     // the values from the client??????
+      key   = HttpLib::to_lower( key );
+      value = HttpLib::to_lower( value );   // TODO: Am i allowed to set lowercase all // the
+                           // values from the client??????
 
       request.setHeader( key, value );
       pos = headerEnd + 2;   // Move me baby to the next line
@@ -176,11 +172,10 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
                 rawMessage.substr( pos, chunkSizeEnd - pos );
 
             // Trim whitespace from chunkSizeStr
-            chunkSizeStr.erase( 0, chunkSizeStr.find_first_not_of( " \t" ) );
-            chunkSizeStr.erase( chunkSizeStr.find_last_not_of( " \t" ) + 1 );
+            chunkSizeStr = HttpLib::trim( chunkSizeStr, std::string( " \t" ) );
 
             // Debug log the chunk size string
-        SLOG_INFO("Parsing chunk size: \"{0}\"", chunkSizeStr);
+            SLOG_INFO( "Parsing chunk size: \"{0}\"", chunkSizeStr );
 
             // TODO: Check if this works...
             size_t chunkSize = std::stoul( chunkSizeStr, nullptr,
