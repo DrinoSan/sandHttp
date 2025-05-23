@@ -1,9 +1,9 @@
 #pragma once
 
-   // System Headers
+// System Headers
 #include <string>
 
-   // Project Headers
+// Project Headers
 #include "HttpMessage.h"
 
 namespace SandServer

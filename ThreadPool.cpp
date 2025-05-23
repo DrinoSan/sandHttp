@@ -40,7 +40,7 @@ ThreadPool_t::ThreadPool_t( size_t numThreads ) : stop{ false }
 //-----------------------------------------------------------------------------
 ThreadPool_t::~ThreadPool_t()
 {
-   stop = true;
+   stop                = true;
    taskQueue.terminate = true;
    taskQueue.notifyAll();   // Notify all waiting threads
 

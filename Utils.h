@@ -1,8 +1,8 @@
 #pragma once
 
 // Project Headers
-#include "Connection.h"
 #include "Common.h"
+#include "Connection.h"
 
 namespace SandServer
 {

@@ -20,7 +20,7 @@ class SocketHandler_t
 {
  public:
    explicit SocketHandler_t( int domain = AF_INET, int type = SOCK_STREAM,
-                           int protocol = 0 );
+                             int protocol = 0 );
    ~SocketHandler_t();
 
    // Initialize the socket: bind to an address and port, then start listening.

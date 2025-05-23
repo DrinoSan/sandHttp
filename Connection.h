@@ -1,8 +1,8 @@
 #pragma once
 
 // System Headers
-#include <string>
 #include <chrono>
+#include <string>
 
 enum ConnectionState_t
 {
@@ -24,5 +24,3 @@ struct Connection_t
    {
    }
 };
-
-

@@ -44,10 +44,7 @@ class TaskQueue_t
    }
 
    // ----------------------------------------------------------------------------
-   bool isEmpty() const
-   {
-      return queue.empty();
-   }
+   bool isEmpty() const { return queue.empty(); }
 
    // ----------------------------------------------------------------------------
    inline void notifyAll() { condition.notify_all(); }
@@ -56,8 +53,8 @@ class TaskQueue_t
    bool terminate{ false };
 
  private:
-   std::queue<T> queue;
-   mutable std::mutex mutex;
+   std::queue<T>           queue;
+   mutable std::mutex      mutex;
    std::condition_variable condition;
 };
 };   // namespace SandServer

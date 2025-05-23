@@ -27,13 +27,13 @@
 #include "Utils.h"
 
 // Not sure if this is a good strategy
-std::atomic<bool> gotSigInt{true};
+std::atomic<bool> gotSigInt{ true };
 
 //-----------------------------------------------------------------------------
-void sigIntHandler(int)
+void sigIntHandler( int )
 {
-    gotSigInt = false;
-    SLOG_WARN("SIGINT received, shutting down gracefully...");
+   gotSigInt = false;
+   SLOG_WARN( "SIGINT received, shutting down gracefully..." );
 }
 
 // General Helper functions
@@ -69,7 +69,8 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
 
    // Creating callback handler for child proceses
    // Reap dead childs... poor childs :(
-   // When a child process terminates, the kernel sends a SIGCHLD signal to the parent
+   // When a child process terminates, the kernel sends a SIGCHLD signal to the
+   // parent
    sa.sa_handler = sigchld_handler;
    sigemptyset( &sa.sa_mask );
    sa.sa_flags = SA_RESTART;
@@ -84,9 +85,9 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
    saInter.sa_mask    = 0;
 
    sigset_t mask;
-   sigemptyset(&mask);
-   sigaddset(&mask, SIGINT);
-   pthread_sigmask(SIG_BLOCK, &mask, nullptr);
+   sigemptyset( &mask );
+   sigaddset( &mask, SIGINT );
+   pthread_sigmask( SIG_BLOCK, &mask, nullptr );
 }
 
 //-----------------------------------------------------------------------------
@@ -256,7 +257,7 @@ void Server_t::listenAndAccept()
           std::bind( &Server_t::processWorkerEvents, this, newSocketFD ) );
    }
 
-   SLOG_INFO("Shutting down server...");
+   SLOG_INFO( "Shutting down server..." );
    socketHandler.closeSocket();
 }
 

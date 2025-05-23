@@ -40,10 +40,12 @@ class ClientClosedConnectionException : public std::runtime_error
 // ----------------------------------------------------------------------------
 // I have no idea what i am catching
 /// The name is long and will piss me off
-class ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError : public std::runtime_error
+class ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError
+    : public std::runtime_error
 {
  public:
-   ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError( const std::string& message )
+   ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError(
+       const std::string& message )
        : std::runtime_error( message )
    {
    }

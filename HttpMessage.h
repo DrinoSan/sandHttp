@@ -142,26 +142,20 @@ class HTTPRequest_t : public HTTPMessage_t
    void printObject() override;
 
    //-----------------------------------------------------------------------------
-   inline void setValid( bool value )
-   {
-      validRequest = value;
-   }
+   inline void setValid( bool value ) { validRequest = value; }
 
    //-----------------------------------------------------------------------------
-   inline bool isValid()
-   {
-      return validRequest;
-   }
+   inline bool isValid() { return validRequest; }
 
  public:
    std::map<std::string, std::string> query;
-   std::string              version;
+   std::string                        version;
 
  private:
    std::string              method;
    std::string              uri;
    std::vector<std::string> urlParts;
-   bool validRequest;
+   bool                     validRequest;
 };
 
 //-----------------------------------------------------------------------------

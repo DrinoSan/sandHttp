@@ -8,7 +8,6 @@
 #include "Log.h"
 #include "SocketIOHandler.h"
 
-
 namespace SandServer
 {
 //-----------------------------------------------------------------------------
@@ -40,7 +39,7 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
          HTTPRequest_t request = socketIOHandler.readHTTPMessage( conn );
          conn.lastActivityTime = std::chrono::steady_clock::now();
 
-         auto handler = getHandler( router, request );
+         auto handler                 = getHandler( router, request );
          auto [ response, keepAlive ] = generateResponse( handler, request );
          socketIOHandler.writeHTTPMessage( conn, response );
 
@@ -90,7 +89,7 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
       catch ( ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError& ex )
       {
          SLOG_ERROR( "I have no idea what just happend {0}", conn.socketFD );
-         assert(false);
+         assert( false );
       }
       catch ( const std::exception& ex )
       {
@@ -105,7 +104,9 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
 }
 
 //-----------------------------------------------------------------------------
-std::pair<HTTPResponse_t, bool> HttpHandler_t::generateResponse( HandlerFunc& handler, HTTPRequest_t& httpRequest )
+std::pair<HTTPResponse_t, bool>
+HttpHandler_t::generateResponse( HandlerFunc&   handler,
+                                 HTTPRequest_t& httpRequest )
 {
    // TODO: Here we create the session cookie and set header
    // SET-COOKIE
@@ -131,7 +132,6 @@ std::pair<HTTPResponse_t, bool> HttpHandler_t::generateResponse( HandlerFunc& ha
    {
       response.setHeader( "connection", "close" );
    }
-
 
    // This feels ugly
    handler( httpRequest, response );

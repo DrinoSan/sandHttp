@@ -132,14 +132,14 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
              "Invalid HTTP request: Header key or value is empty." );
       }
 
-      if( key.size() > 256 || value.size() > 4096 )
+      if ( key.size() > 256 || value.size() > 4096 )
       {
          throw ParsingExceptionMalformedHeader_t(
              "Invalid HTTP request: Header key or value is to long." );
       }
 
       // Setting everything to lower because its my realm
-      key   = HttpLib::to_lower( key );
+      key = HttpLib::to_lower( key );
 
       request.setHeader( key, value );
       pos = headerEnd + 2;   // Move me baby to the next line

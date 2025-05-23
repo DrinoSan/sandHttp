@@ -95,11 +95,13 @@ std::string HTTPRequest_t::pathValue( const std::string& value ) const
 //-----------------------------------------------------------------------------
 void HTTPRequest_t::printObject()
 {
-   SLOG_INFO( "-------------------  DUMP REQUEST URL/Method/Version BEGIN ------------------- " );
+   SLOG_INFO( "-------------------  DUMP REQUEST URL/Method/Version BEGIN "
+              "------------------- " );
    SLOG_INFO( "Method: {0}", method );
    SLOG_INFO( "URI: {0}", uri );
    SLOG_INFO( "Version: {0}", version );
-   SLOG_INFO( "-------------------   DUMP REQUEST URL/Method/Version END  ------------------- " );
+   SLOG_INFO( "-------------------   DUMP REQUEST URL/Method/Version END  "
+              "------------------- " );
 
    HTTPMessage_t::printObject();
 }

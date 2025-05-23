@@ -144,7 +144,8 @@ int32_t SocketHandler_t::readFromSocket( Connection_t& conn )
          throw TimeoutException( "Socket read timed out." );
       }
 
-      throw ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError( "Error receiving data from socket." );
+      throw ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError(
+          "Error receiving data from socket." );
    }
 
    return bytesRead;

@@ -8,7 +8,7 @@ int main()
    SandServer::Log_t::init();   // TODO move to Server_t constructor
    SLOG_INFO( "SANDRINO Initialized Log!" );
 
-   asio::io_service ios;
+   asio::io_service     ios;
    SandServer::Server_t server;
 
    server.addRoute( "/home", SandServer::SAND_METHOD::GET,
@@ -20,7 +20,8 @@ int main()
                        response.setHeader( "content-type", "text/html" );
                     } );
 
-   server.addRoute( "/pathvalue/{pathname}/foo/fiz", SandServer::SAND_METHOD::GET,
+   server.addRoute( "/pathvalue/{pathname}/foo/fiz",
+                    SandServer::SAND_METHOD::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {
@@ -32,7 +33,8 @@ int main()
                        response.setHeader( "content-type", "text/html" );
                     } );
 
-   server.addRoute( "/pathvalue/{pathname}/bar/fiz", SandServer::SAND_METHOD::GET,
+   server.addRoute( "/pathvalue/{pathname}/bar/fiz",
+                    SandServer::SAND_METHOD::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {

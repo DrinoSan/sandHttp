@@ -2,8 +2,8 @@
 #include <thread>
 
 // Project Headers
-#include "TaskQueue.h"
 #include "Log.h"
+#include "TaskQueue.h"
 
 namespace SandServer
 {
@@ -21,10 +21,7 @@ class ThreadPool_t
       taskQueue.push( std::forward<F>( f ) );
    }
 
-   bool isQueueEmpty()
-   {
-      return taskQueue.isEmpty();
-   }
+   bool isQueueEmpty() { return taskQueue.isEmpty(); }
 
    void init( size_t numThreads );
 
