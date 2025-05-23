@@ -1,5 +1,5 @@
 // System Headers
-#include <string.h>
+#include <string>
 
 // Project Headers
 #include "HttpParser.h"
@@ -23,6 +23,8 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
    std::string completeRequest =
        conn.persistentBuffer.substr( 0, endOfRequestPos );
 
+   // I cant call clear beacuse it is possible that i have data read beyond
+   // /r/n/r/n
    conn.persistentBuffer.erase( 0, endOfRequestPos );
 
    HTTPRequest_t request = HttpParser_t::parseRequest( completeRequest );

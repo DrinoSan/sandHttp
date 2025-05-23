@@ -290,11 +290,10 @@ ProtocolType_t Server_t::detectProtocol( const std::string& data )
 //-----------------------------------------------------------------------------
 void Server_t::processWorkerEvents( int32_t newSocketFD )
 {
-   Connection_t conn{ newSocketFD };
-
    SLOG_INFO( "\n\n------ BEGIN: Got a message on the socket to read "
               "------\n\n" );
 
+   Connection_t conn{ newSocketFD };
    socketHandler.readFromSocket( conn );
    ProtocolType_t protocol = detectProtocol( conn.persistentBuffer );
 

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <string>
 
+//-----------------------------------------------------------------------------
 enum ConnectionState_t
 {
    IDLE,
@@ -11,6 +12,7 @@ enum ConnectionState_t
    CLOSED
 };
 
+//-----------------------------------------------------------------------------
 struct Connection_t
 {
    int                                   socketFD;
