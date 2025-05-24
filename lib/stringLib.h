@@ -41,20 +41,6 @@ inline tstring<CharT> reverse( tstring<CharT> text )
 }
 
 //-----------------------------------------------------------------------------
-// Function to trim string (both ends)
-template <typename CharT>
-inline tstring<CharT> toLower( const tstring<CharT>& text )
-{
-   auto first{ text.find_first_not_of( ' ' ) };
-   if ( first == tstring<CharT>::npos )
-      return tstring<CharT>();   // Empty result if all chars match
-
-   auto end{ text.find_last_not_of( ' ' ) };
-
-   return text.substr( first, ( end - first + 1 ) );
-}
-
-//-----------------------------------------------------------------------------
 // Function to leftTrim
 template <typename CharT>
 inline tstring<CharT> leftTrim( const tstring<CharT>& text )

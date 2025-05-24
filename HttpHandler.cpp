@@ -110,16 +110,18 @@ HttpHandler_t::generateResponse( HandlerFunc&   handler,
 {
    // TODO: Here we create the session cookie and set header
    // SET-COOKIE
-   // TODO: Make sure getHeader searches case insensitive.. or
-   // convert all headers to lowercase and work with that
    auto cookie = httpRequest.getHeader( "cookie" ).value_or( "NO COOKIE" );
 
    // Checking for keep-alive
-   bool keepAlive{ true };
-   if ( httpRequest.getHeader( "connection" ).value_or( "" ) == "close" ||
-        httpRequest.version == "HTTP/1.0" )
+   bool keepAlive = httpRequest.version == "HTTP/1.1";
+   std::string connectionHeader = httpRequest.getHeader( "connection" ).value_or( "" );
+   if( connectionHeader == "close" )
    {
       keepAlive = false;
+   }
+   else if( connectionHeader == "keep-alive" )
+   {
+      keepAlive = true;
    }
 
    HTTPResponse_t response;
