@@ -14,7 +14,7 @@ set(VENDOR_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/vendor/spdlog/include)
 message(STATUS "VENDOR_INCLUDE_DIR: ${VENDOR_INCLUDE_DIR}")
 
 # Find required packages
-find_package(Boost REQUIRED COMPONENTS system thread)
+#find_package(Boost REQUIRED COMPONENTS system thread)
 
 set_source_files_properties( tags PROPERTIES GENERATED true)
 add_custom_command ( OUTPUT tags

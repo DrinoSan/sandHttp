@@ -38,10 +38,10 @@ class Router_t
    /// Function to add register new routes
    /// @param route route to add
    /// @param handler function which will be executed at given route
-   inline void addRoute( const std::string& route, HandlerFunc handler,
+   inline void addRoute( const std::string& route, HandlerFunc& handler,
                          SAND_METHOD httpMethod )
    {
-      routes.emplace_back( route, handler, httpMethod );
+      routes.emplace_back( route, std::move( handler ), httpMethod );
    }
 
    //-----------------------------------------------------------------------------

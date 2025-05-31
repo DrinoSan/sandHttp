@@ -13,6 +13,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <signal.h>
 
 // Project Headers
 #include "Connection.h"

@@ -8,11 +8,11 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <sys/event.h>
 #include <sys/select.h>
 #include <unistd.h>
 #include <utility>
 #include <vector>
+#include <sys/wait.h>
 
 // Project HEADERS
 #include "Exceptions.h"
@@ -82,7 +82,7 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
 
    saInter.sa_handler = sigIntHandler;
    saInter.sa_flags   = 0;   // or SA_RESTART
-   saInter.sa_mask    = 0;
+   sigemptyset(&saInter.sa_mask);
 
    sigset_t mask;
    sigemptyset( &mask );
@@ -329,7 +329,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
 bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
                          HandlerFunc handler )
 {
-   router.addRoute( route, std::move( handler ), method );
+   router.addRoute( route, handler, method );
    return true;
 }
 

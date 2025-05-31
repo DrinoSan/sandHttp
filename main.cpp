@@ -1,14 +1,12 @@
 // Project HEADERS
 #include "Log.h"
 #include "Server.h"
-#include "asio.hpp"
 
 int main()
 {
    SandServer::Log_t::init();   // TODO move to Server_t constructor
    SLOG_INFO( "SANDRINO Initialized Log!" );
 
-   asio::io_service     ios;
    SandServer::Server_t server;
 
    server.addRoute( "/home", SandServer::SAND_METHOD::GET,
