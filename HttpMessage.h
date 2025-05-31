@@ -67,7 +67,7 @@ class HTTPMessage_t
    //-----------------------------------------------------------------------------
    virtual void printObject();
 
- protected:
+ public:
    std::map<std::string, std::string> headers;
    std::string                        body;
 };

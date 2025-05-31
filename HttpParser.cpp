@@ -146,7 +146,7 @@ HTTPRequest_t HttpParser_t::parseRequest( const std::string& rawMessage )
    }
 
    // Checking for mandatory header value
-   if ( request.getHeader( "host" ).value_or( "" ).empty() )
+   if ( !request.headers.count( "host" ) )
    {
       throw ParsingExceptionMalformedHeader_t(
           "Invalid HTTP request: Missing Host header." );
