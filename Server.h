@@ -91,7 +91,7 @@ class Server_t
    // @param method is the method type for which this endpoint should be
    // usable
    // @param function to be executed on endpoint call
-   bool addRoute( std::string&& route, const SAND_METHOD& method,
+   void addRoute( std::string&& route, const SAND_METHOD& method,
                   HandlerFunc handler );
 
  private:

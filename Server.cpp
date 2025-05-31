@@ -326,11 +326,10 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
 }
 
 //-----------------------------------------------------------------------------
-bool Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
+void Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
                          HandlerFunc handler )
 {
    router.addRoute( route, handler, method );
-   return true;
 }
 
 }   // namespace SandServer
