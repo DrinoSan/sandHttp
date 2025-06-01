@@ -33,7 +33,8 @@ class HTTPMessage_t
    virtual ~HTTPMessage_t() = default;
 
    //-----------------------------------------------------------------------------
-   void setHeader( const std::string& name, const std::string& value );
+   /// Not using const refere because it will be moved into the header map
+   void setHeader( std::string name, std::string value );
 
    //-----------------------------------------------------------------------------
    std::string stringifyHeaders();
