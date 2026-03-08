@@ -5,6 +5,10 @@
 #include "HttpParser.h"
 #include "SocketHandler.h"
 #include "SocketIOHandler.h"
+#include "Exceptions.h"
+
+
+constexpr size_t MAX_HEADER_SIZE = 8192; // 8KB
 
 namespace SandServer
 {
@@ -16,6 +20,13 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
       // No complete request in buffer yet, so read more data.
       // This call appends any new data into conn.persistentBuffer.
       SocketHandler_t::readFromSocket( conn );
+
+      // Catching requests which would make me die
+      // Example missing \r\n\r\n
+      if( conn.persistentBuffer.size() > MAX_HEADER_SIZE )
+      {
+         throw RequestHeaderException( "Request header too large" );
+      }
    }
 
    size_t endOfRequestPos = conn.persistentBuffer.find( "\r\n\r\n" ) + 4;
