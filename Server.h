@@ -22,7 +22,6 @@
 #include "Router.h"
 #include "SandMethod.h"
 #include "SocketHandler.h"
-#include "SocketIOHandler.h"
 #include "ThreadPool.h"
 #include "config/config.h"
 
@@ -30,51 +29,12 @@ namespace fs = std::filesystem;
 
 namespace SandServer
 {
-using handlerFunc =
-    std::function<void( HTTPRequest_t& request, HTTPResponse_t& response )>;
-
-struct RouteKey
-{
-   std::string uri;
-   SAND_METHOD method;
-   bool        isPattern;
-   std::string pathValuePlaceholder;
-
-   // Just playing
-   std::string placeholder;
-   int32_t     placeholderBegin;
-
-   RouteKey( std::string uri_, const std::string& method_,
-             bool isPattern_ = false, std::string pathPlaceholder_ = "" )
-       : uri( std::move( uri_ ) ),
-         method( httpMethod::stringToMethod( method_ ) ),
-         isPattern( isPattern_ ),
-         pathValuePlaceholder( std::move( pathPlaceholder_ ) )
-   {
-   }
-
-   // When you already coding please implement a json parser for the messages
-   // Also check if the http message parser in socketIOhandler can handle
-   // requests with a body / content length Function to provide ability for
-   // usage as key in map
-   bool operator<( const RouteKey& other ) const
-   {
-      if ( this->uri != other.uri )
-      {
-         return this->uri < other.uri;
-      }
-
-      return this->method < other.method;
-   }
-};
-
 class Server_t
 {
  public:
    Server_t();
    Server_t( std::string configPath );
    ~Server_t();
-   SocketIOHandler_t socketIOHandler;
    SocketHandler_t   socketHandler;
 
    // Function to handle static files served from filePath
@@ -107,15 +67,10 @@ class Server_t
    // Work baby work
    void processWorkerEvents( int32_t workerIdx );
 
-   // Function to handle incoming requests
-   /// Handling keep-alive for now
-   std::pair<HTTPResponse_t, bool>
-   generateResponse( HTTPRequest_t& httpRequest );
-
    // Function to handle incoming routes from clients
    // TODO: Later this function will probably return something
    // @param incoming request
-   auto handleRouting( HTTPRequest_t& request ) -> handlerFunc;
+   HandlerFunc handleRouting( HTTPRequest_t& request );
 
    // Function to read and return file content into response
    /// @param servingDir directory which is served
@@ -139,10 +94,6 @@ class Server_t
    ThreadPool_t threadPool;
 
    int32_t readAll( int32_t sockFd );
-
-   // Could also use std::map<std::tuple<std::string, SAND_METHOD>,
-   // std::function<void()>> routes;
-   std::map<RouteKey, handlerFunc> routes;
 
    Router_t       router;
    ServerConfig_t config;

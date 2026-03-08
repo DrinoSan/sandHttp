@@ -167,21 +167,4 @@ void HTTPResponse_t::notFound()
    page404.close();
 }
 
-//-----------------------------------------------------------------------------
-std::string HTTPResponse_t::stringifyHeaders()
-{
-   std::string header;
-   for ( const auto& [ key, value ] : headers )
-   {
-      header.append( key );
-      header.append( ":" );
-      header.append( value );
-      header.append( "\r\n" );
-   }
-
-   header.append( "\r\n" );
-
-   return header;
-}
-
 };   // namespace SandServer

@@ -37,6 +37,7 @@ SocketHandler_t::~SocketHandler_t()
    if ( socketFD != -1 )
    {
       ::close( socketFD );
+      socketFD = -1;
    }
 }
 

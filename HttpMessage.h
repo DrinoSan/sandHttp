@@ -220,10 +220,6 @@ class HTTPResponse_t : public HTTPMessage_t
    //-----------------------------------------------------------------------------
    void notFound();
 
-   //-----------------------------------------------------------------------------
-   [[nodiscard]]
-   std::string stringifyHeaders();
-
  private:
    // Specific methods
    [[nodiscard]]
