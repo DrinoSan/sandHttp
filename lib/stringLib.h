@@ -1,3 +1,4 @@
+#pragma ocne
 #include <string>
 
 namespace HttpLib
