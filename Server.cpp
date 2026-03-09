@@ -297,25 +297,24 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
    socketHandler.readFromSocket( conn );
    ProtocolType_t protocol = detectProtocol( conn.persistentBuffer );
 
+   std::unique_ptr<ProtocolHandler_t> handler;
+
    // Dispatcher
    switch ( protocol )
    {
    case ProtocolType_t::HTTP:
    {
-      HttpHandler_t httpHandler;
-      httpHandler.handleConnection( conn, router );
+      handler = std::make_unique<HttpHandler_t>();
       break;
    }
    case ProtocolType_t::WEBSOCKET:
    {
-      // WebSocketHandler wsHandler;
-      // wsHandler.handleConnection(clientSocket);
+      // handler = std::make_unique<WebSocketHandler_t>();
       break;
    }
    case ProtocolType_t::MQTT:
    {
-      // MqttHandler mqttHandler;
-      // mqttHandler.handleConnection(clientSocket);
+      // handler = std::make_unique<MqttHandler>();
       break;
    }
    default:
@@ -323,10 +322,15 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       close( conn.socketFD );
       break;
    }
+
+   if( handler )
+   {
+      handler->handleConnection( conn, router );
+   }
 }
 
 //-----------------------------------------------------------------------------
-void Server_t::addRoute( std::string&& route, const SAND_METHOD& method,
+void Server_t::addRoute( std::string&& route, const HttpMethod& method,
                          HandlerFunc handler )
 {
    router.addRoute( route, handler, method );

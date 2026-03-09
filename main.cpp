@@ -9,7 +9,7 @@ int main()
 
    SandServer::Server_t server;
 
-   server.addRoute( "/home", SandServer::SAND_METHOD::GET,
+   server.addRoute( "/home", SandServer::HttpMethod::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {
@@ -19,7 +19,7 @@ int main()
                     } );
 
    server.addRoute( "/pathvalue/{pathname}/foo/fiz",
-                    SandServer::SAND_METHOD::GET,
+                    SandServer::HttpMethod::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {
@@ -32,7 +32,7 @@ int main()
                     } );
 
    server.addRoute( "/pathvalue/{pathname}/bar/fiz",
-                    SandServer::SAND_METHOD::GET,
+                    SandServer::HttpMethod::GET,
                     []( const SandServer::HTTPRequest_t& request,
                         SandServer::HTTPResponse_t&      response )
                     {
@@ -45,7 +45,7 @@ int main()
                     } );
 
    server.addRoute(
-       "/session", SandServer::SAND_METHOD::GET,
+       "/session", SandServer::HttpMethod::GET,
        [ &server ]( const SandServer::HTTPRequest_t& request,
                     SandServer::HTTPResponse_t&      response )
        {

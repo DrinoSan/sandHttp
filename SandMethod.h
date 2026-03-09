@@ -4,7 +4,7 @@
 
 namespace SandServer
 {
-enum class SAND_METHOD
+enum class HttpMethod
 {
    GET,
    POST,
@@ -15,7 +15,7 @@ enum class SAND_METHOD
 
 namespace httpMethod
 {
-SAND_METHOD stringToMethod( const std::string& method );
-std::string methodToString( const SAND_METHOD& method );
+HttpMethod stringToMethod( const std::string& method );
+std::string methodToString( const HttpMethod& method );
 }   // namespace httpMethod
 };   // namespace SandServer

@@ -97,7 +97,7 @@ class HTTPRequest_t : public HTTPMessage_t
 
    //-----------------------------------------------------------------------------
    [[nodiscard]]
-   inline SAND_METHOD getMethod() const
+   inline HttpMethod getMethod() const
    {
       return httpMethod::stringToMethod( method );
    };

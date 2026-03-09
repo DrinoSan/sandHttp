@@ -10,8 +10,8 @@
 namespace SandServer
 {
 //-----------------------------------------------------------------------------
-void HTTPMessage_t::setHeader( const std::string name,
-                               const std::string value )
+void HTTPMessage_t::setHeader( std::string name,
+                               std::string value )
 {
    headers[ std::move( name ) ] = std::move( value );
 }

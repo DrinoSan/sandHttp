@@ -12,7 +12,7 @@ namespace SandServer
 {
 //-----------------------------------------------------------------------------
 Route_t::Route_t( std::string route_, HandlerFunc handler_,
-                  SAND_METHOD httpMethod_ )
+                  HttpMethod httpMethod_ )
     : route{ std::move( route_ ) }, handler{ std::move( handler_ ) },
       httpMethod{ httpMethod_ }
 {
@@ -40,7 +40,7 @@ std::optional<HandlerFunc> Router_t::matchRoute( HTTPRequest_t& request )
    auto requestPathElements = Utils::splitString( request.getURI(), '/' );
 
    if ( requestPathElements[ 0 ] == staticFilesUrlPrefix &&
-        request.getMethod() == SAND_METHOD::GET )
+        request.getMethod() == HttpMethod::GET )
    {
       request.setUrlParts( requestPathElements );
       return staticFileHandler;

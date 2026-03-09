@@ -7,44 +7,44 @@ namespace SandServer
 namespace httpMethod
 {
 //-----------------------------------------------------------------------------
-SAND_METHOD stringToMethod( const std::string& method )
+HttpMethod stringToMethod( const std::string& method )
 {
    if ( method == "GET" )
    {
-      return SAND_METHOD::GET;
+      return HttpMethod::GET;
    }
    if ( method == "POST" )
    {
-      return SAND_METHOD::POST;
+      return HttpMethod::POST;
    }
    if ( method == "PUT" )
    {
-      return SAND_METHOD::PUT;
+      return HttpMethod::PUT;
    }
    if ( method == "DELETE" )
    {
-      return SAND_METHOD::DELETE;
+      return HttpMethod::DELETE;
    }
 
    SLOG_INFO( "Unknown HTTP method" );
-   return SAND_METHOD::UNKNOWN;
+   return HttpMethod::UNKNOWN;
 }
 
 //-----------------------------------------------------------------------------
-std::string methodToString( const SAND_METHOD& method )
+std::string methodToString( const HttpMethod& method )
 {
    switch ( method )
    {
-   case SAND_METHOD::GET:
+   case HttpMethod::GET:
       return "GET";
 
-   case SAND_METHOD::POST:
+   case HttpMethod::POST:
       return "POST";
 
-   case SAND_METHOD::PUT:
+   case HttpMethod::PUT:
       return "PUT";
 
-   case SAND_METHOD::DELETE:
+   case HttpMethod::DELETE:
       return "DELETE";
 
    default:
