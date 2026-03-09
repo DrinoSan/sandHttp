@@ -76,7 +76,7 @@ inline tstring<CharT> trim( const tstring<CharT>& text, const tstring<CharT>& ch
 
    auto end{ text.find_last_not_of( chars ) };
 
-   return text.substr( 0, text.size() - first );
+   return text.substr( first, end - first + 1 );
 }
 
 };

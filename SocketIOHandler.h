@@ -17,7 +17,7 @@ class SocketIOHandler_t
    // Function to write a http message to client/socket
    /// @param socketFD to write data to
    /// @param httpMessage the message we want to write to the socket
-   void writeHTTPMessage( Connection_t& conn, const HTTPResponse_t& response );
+   void writeHTTPMessage( Connection_t& conn, const std::string& response );
 
    // Function to check if socket has data to read
    bool hasSocketDataToRead( int32_t socketFD );

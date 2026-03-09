@@ -54,9 +54,9 @@ HTTPRequest_t SocketIOHandler_t::readHTTPMessage( Connection_t& conn )
 
 //-----------------------------------------------------------------------------
 void SocketIOHandler_t::writeHTTPMessage( Connection_t&         conn,
-                                          const HTTPResponse_t& response )
+                                          const std::string& response )
 {
-   SocketHandler_t::writeToSocket( conn, response.getBody() );
+   SocketHandler_t::writeToSocket( conn, response );
 }
 
 //-----------------------------------------------------------------------------

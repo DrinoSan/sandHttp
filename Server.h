@@ -93,8 +93,6 @@ class Server_t
    std::thread  listenerThread;
    ThreadPool_t threadPool;
 
-   int32_t readAll( int32_t sockFd );
-
    Router_t       router;
    ServerConfig_t config;
 };

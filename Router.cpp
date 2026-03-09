@@ -20,7 +20,7 @@ Route_t::Route_t( std::string route_, HandlerFunc handler_,
    size_t pos    = 0;
 
    // TODO: Check if it also works with missing '}'
-   while ( ( pos = route.find( '{', pos ) != std::string::npos ) )
+   while ( ( pos = route.find( '{', pos ) ) != std::string::npos )
    {
       size_t end = route.find( '}', pos );
       if ( end != std::string::npos )
@@ -39,7 +39,8 @@ std::optional<HandlerFunc> Router_t::matchRoute( HTTPRequest_t& request )
 
    auto requestPathElements = Utils::splitString( request.getURI(), '/' );
 
-   if ( requestPathElements[ 0 ] == staticFilesUrlPrefix &&
+   if ( !requestPathElements.empty() &&
+        requestPathElements[ 0 ] == staticFilesUrlPrefix &&
         request.getMethod() == HttpMethod::GET )
    {
       request.setUrlParts( requestPathElements );

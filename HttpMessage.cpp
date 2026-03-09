@@ -10,8 +10,7 @@
 namespace SandServer
 {
 //-----------------------------------------------------------------------------
-void HTTPMessage_t::setHeader( std::string name,
-                               std::string value )
+void HTTPMessage_t::setHeader( std::string name, std::string value )
 {
    headers[ std::move( name ) ] = std::move( value );
 }
@@ -107,6 +106,19 @@ void HTTPRequest_t::printObject()
 }
 
 // HTTPResponse Definitions
+//-----------------------------------------------------------------------------
+std::string HTTPResponse_t::serialize()
+{
+   if ( !body.empty() )
+   {
+      setHeader( "Content-Length", std::to_string( body.size() ) );
+   }
+
+   std::string result = setStatusLine();
+   result += stringifyHeaders();
+   result += body;
+   return result;
+}
 
 //-----------------------------------------------------------------------------
 void HTTPResponse_t::prepareResponse()
@@ -120,17 +132,7 @@ void HTTPResponse_t::prepareResponse()
 
    // 1 statusLine
    std::string header = setStatusLine();
-   for ( const auto& [ key, value ] : headers )
-   {
-      header.append( key );
-      header.append( ":" );
-      header.append( value );
-      header.append( "\r\n" );
-   }
-
-   header.append( "\r\n" );
-
-   body = header + body;
+   body               = header + stringifyHeaders() + body;
 }
 
 //-----------------------------------------------------------------------------

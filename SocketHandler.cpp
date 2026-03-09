@@ -145,7 +145,7 @@ int32_t SocketHandler_t::readFromSocket( Connection_t& conn )
          throw TimeoutException( "Socket read timed out." );
       }
 
-      throw ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError(
+      throw UnexpectedSocketException(
           "Error receiving data from socket." );
    }
 

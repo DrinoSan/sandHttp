@@ -11,6 +11,18 @@
 namespace SandServer
 {
 //-----------------------------------------------------------------------------
+static bool shouldKeepAlive( const HTTPRequest_t& request )
+{
+   bool keepAlive  = request.version == "HTTP/1.1";
+   auto connHeader = request.getHeader( "connection" ).value_or( "" );
+   if ( connHeader == "close" )
+      return false;
+   if ( connHeader == "keep-alive" )
+      return true;
+   return keepAlive;
+}
+
+//-----------------------------------------------------------------------------
 HandlerFunc getHandler( Router_t& router, HTTPRequest_t& httpRequest )
 {
    httpRequest.printObject();
@@ -39,9 +51,14 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
          HTTPRequest_t request = socketIOHandler.readHTTPMessage( conn );
          conn.lastActivityTime = std::chrono::steady_clock::now();
 
-         auto handler                 = getHandler( router, request );
-         auto [ response, keepAlive ] = generateResponse( handler, request );
-         socketIOHandler.writeHTTPMessage( conn, response );
+         auto handler   = getHandler( router, request );
+         auto keepAlive = shouldKeepAlive( request );
+
+         HTTPResponse_t response;
+         response.setHeader( "connection", keepAlive ? "keep-alive" : "close" );
+         handler( request, response );
+
+         socketIOHandler.writeHTTPMessage( conn, response.serialize() );
 
          if ( !keepAlive )
          {
@@ -61,32 +78,12 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
          SLOG_ERROR( "Client closed connection on socket {0}", conn.socketFD );
          break;
       }
-      catch ( const ParsingExceptionMissingRequestline_t& ex )
+      catch ( const ParsingException_t& ex )
       {
          SLOG_ERROR( "{0}", ex.what() );
          break;
       }
-      catch ( const ParsingExceptionMissingHeaderDelimiter_t& ex )
-      {
-         SLOG_ERROR( "{0}", ex.what() );
-         break;
-      }
-      catch ( const ParsingExceptionMalformedStatusLine_t& ex )
-      {
-         SLOG_ERROR( "{0}", ex.what() );
-         break;
-      }
-      catch ( const ParsingExceptionUnsupportedHTTPMethod_t& ex )
-      {
-         SLOG_ERROR( "{0}", ex.what() );
-         break;
-      }
-      catch ( const ParsingExceptionMalformedHeader_t& ex )
-      {
-         SLOG_ERROR( "{0}", ex.what() );
-         break;
-      }
-      catch ( ServerExceptionIDontKnowWhatIamButIInheritFromRuntimeError& ex )
+      catch ( UnexpectedSocketException& ex )
       {
          SLOG_ERROR( "I have no idea what just happend {0}", conn.socketFD );
          assert( false );
@@ -104,43 +101,18 @@ void HttpHandler_t::handleConnection( Connection_t& conn, Router_t& router )
 }
 
 //-----------------------------------------------------------------------------
-std::pair<HTTPResponse_t, bool>
-HttpHandler_t::generateResponse( HandlerFunc&   handler,
-                                 HTTPRequest_t& httpRequest )
-{
-   // TODO: Here we create the session cookie and set header
-   // SET-COOKIE
-   auto cookie = httpRequest.getHeader( "cookie" ).value_or( "NO COOKIE" );
-
-   // Checking for keep-alive
-   bool keepAlive = httpRequest.version == "HTTP/1.1";
-   std::string connectionHeader = httpRequest.getHeader( "connection" ).value_or( "" );
-   if( connectionHeader == "close" )
-   {
-      keepAlive = false;
-   }
-   else if( connectionHeader == "keep-alive" )
-   {
-      keepAlive = true;
-   }
-
-   HTTPResponse_t response;
-   if ( keepAlive == true )
-   {
-      SLOG_WARN( " SETTING keep alive header" );
-      response.setHeader( "connection", "keep-alive" );
-   }
-   else
-   {
-      response.setHeader( "connection", "close" );
-   }
-
-   // This feels ugly
-   handler( httpRequest, response );
-   response.prepareResponse();   // This is critical to call
-                                 // because it sets content length
-
-   return std::make_pair( response, keepAlive );
-}
+// HTTPResponse_t HttpHandler_t::generateResponse( HandlerFunc&   handler,
+//                                                HTTPRequest_t& httpRequest )
+//{
+//   // TODO: Here we create the session cookie and set header
+//   // SET-COOKIE
+//   auto cookie = httpRequest.getHeader( "cookie" ).value_or( "NO COOKIE" );
+//
+//   // Checking for keep-alive
+//   // This feels ugly
+//   //handler( httpRequest, response );
+//
+//   //return response;
+//}
 
 };   // namespace SandServer

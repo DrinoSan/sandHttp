@@ -212,6 +212,9 @@ class HTTPResponse_t : public HTTPMessage_t
    [[nodiscard]] std::string getReasonPhrase() const;
 
    //-----------------------------------------------------------------------------
+   std::string serialize();
+
+   //-----------------------------------------------------------------------------
    void prepareResponse();
 
    //-----------------------------------------------------------------------------
@@ -223,7 +226,7 @@ class HTTPResponse_t : public HTTPMessage_t
  private:
    // Specific methods
    [[nodiscard]]
-   inline std::string setStatusLine()
+   inline std::string setStatusLine() const
    {
       return httpVersion + " " + std::to_string( statusCode ) + " " +
              reasonPhrase + "\r\n";

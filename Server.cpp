@@ -9,10 +9,10 @@
 #include <string>
 #include <string_view>
 #include <sys/select.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <utility>
 #include <vector>
-#include <sys/wait.h>
 
 // Project HEADERS
 #include "Exceptions.h"
@@ -33,7 +33,8 @@ std::atomic<bool> gotSigInt{ true };
 void sigIntHandler( int )
 {
    gotSigInt = false;
-   SLOG_WARN( "SIGINT received, shutting down gracefully..." );
+   //SLOG_WARN( "SIGINT received, shutting down gracefully..." );
+   // Signal handlers must only call async-signal-safe functions. `SLOG_WARN` internally calls spdlog, which allocates memory, acquires mutexes, and performs I/O
 }
 
 // General Helper functions
@@ -82,7 +83,7 @@ Server_t::Server_t( std::string configPath ) : config{ configPath }
 
    saInter.sa_handler = sigIntHandler;
    saInter.sa_flags   = 0;   // or SA_RESTART
-   sigemptyset(&saInter.sa_mask);
+   sigemptyset( &saInter.sa_mask );
 
    sigset_t mask;
    sigemptyset( &mask );
@@ -150,7 +151,18 @@ HTTPResponse_t Server_t::serveFile( const fs::path&                 servingDir,
          continue;
       }
 
-      filePath = filePath / fs::path( part );
+      filePath              = filePath / fs::path( part );
+      auto canonicalServing = fs::weakly_canonical( servingDir );
+      auto canonicalFile    = fs::weakly_canonical( filePath );
+      if ( canonicalFile.string().find( canonicalServing.string() ) != 0 )
+      {
+         SLOG_WARN( "------ Identified potential traverse attack ------" );
+         SLOG_WARN( "------------ filePath {0} servingDir {1}", filePath,
+                    servingDir );
+
+         response.notFound();   // or 403 Forbidden
+         return response;
+      }
    }
 
    // Check if the file exists
@@ -323,7 +335,7 @@ void Server_t::processWorkerEvents( int32_t newSocketFD )
       break;
    }
 
-   if( handler )
+   if ( handler )
    {
       handler->handleConnection( conn, router );
    }

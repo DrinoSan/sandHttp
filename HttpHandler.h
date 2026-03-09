@@ -15,8 +15,7 @@ class HttpHandler_t : public ProtocolHandler_t
    void handleConnection( Connection_t& conn, Router_t& router ) override;
 
  private:
-   std::pair<HTTPResponse_t, bool>
-   generateResponse( HandlerFunc& handler, HTTPRequest_t& httpRequest );
+   //HTTPResponse_t generateResponse( HandlerFunc& handler, HTTPRequest_t& httpRequest );
 
    SocketIOHandler_t socketIOHandler;
 };
